@@ -5,7 +5,7 @@ import About from './About';
 import Help from './Help';
 import Contact from './Contact';
 import Background from '../components/Background/Background';
-import { Link } from 'react-router-dom';
+//import { Link } from 'react-router-dom';
 
 const HomePage = () => {
   return (

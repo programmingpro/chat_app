@@ -204,7 +204,7 @@ const LoginPage = () => {
                 fontFamily: 'Inter, sans-serif',
                 fontWeight: 700,
                 fontSize: '16px',
-                lineHeight: '24px',                                
+                lineHeight: '24px',                                               
                 color: '#FFFFFF',
                 textTransform: 'none',
                 ':hover': {

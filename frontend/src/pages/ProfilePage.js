@@ -8,17 +8,17 @@ import {
   IconButton,
 } from '@mui/material';
 import { styled } from '@mui/system';
-import { useNavigate } from 'react-router-dom'; // Для навигации
-
-// Импортируем кастомные иконки
-import CameraIcon from '../assets/CameraIcon.svg'; // Путь к вашему SVG
-import SettingsIcon from '../assets/SettingsIcon.svg'; // Путь к вашему SVG
+import { useNavigate } from 'react-router-dom'; 
+import CameraIcon from '../assets/CameraIcon.svg'; 
+import SettingsIcon from '../assets/SettingsIcon.svg'; 
 
 const Root = styled(Box)({
   width: '100%',
-  minHeight: '100vh', // Полная высота экрана
+  minHeight: '100vh', 
   display: 'flex',
   justifyContent: 'center',
+  alignItems: 'center',
+  flexDirection: 'column', 
   alignItems: 'center',
   backgroundColor: '#F9FAFB',
 });
@@ -39,6 +39,7 @@ const Header = styled(Box)({
   display: 'flex',
   justifyContent: 'space-between',
   alignItems: 'center',
+  position: 'relative', // Добавляем relative для позиционирования иконки
 });
 
 const ProfileIcon = styled(Avatar)({
@@ -52,19 +53,48 @@ const ProfileIcon = styled(Avatar)({
 });
 
 const IconButtonStyled = styled(IconButton)({
-  backgroundColor: '#3B82F6', // Синий цвет
-  color: '#ffffff', // Белый цвет иконки
-  borderRadius: '50%',
+  backgroundColor: '#3B82F6', 
+  color: '#ffffff', 
+  borderRadius: '50%', // Круглая форма для CameraIcon
   padding: '8px',
+  width: '40px', // Размер кнопки
+  height: '40px', // Размер кнопки
   '&:hover': {
     backgroundColor: '#2563EB',
   },
+  '& img': {
+    width: '24px', // Размер иконки внутри кнопки
+    height: '24px', // Размер иконки внутри кнопки
+  },
+});
+
+const SettingsIconStyled = styled(IconButton)({
+  backgroundColor: '#3B82F6', 
+  color: '#ffffff', 
+  borderRadius: '8px', // Квадратная форма со скруглением для SettingsIcon
+  padding: '8px',
+  width: '40px', // Размер кнопки
+  height: '40px', // Размер кнопки
+  '&:hover': {
+    backgroundColor: '#2563EB',
+  },
+  '& img': {
+    width: '24px', // Размер иконки внутри кнопки
+    height: '24px', // Размер иконки внутри кнопки
+  },
+});
+
+const CameraIconWrapper = styled(Box)({
+  position: 'absolute', // Абсолютное позиционирование для CameraIcon
+  left: '70px', // Смещаем иконку влево
+  top: '79%', // Центрируем по вертикали
+  transform: 'translateY(-50%)', // Корректируем позиционирование
 });
 
 const IconsContainer = styled(Box)({
-  display: 'flex',
-  gap: '8px',
-  marginLeft: '-20px', // Сдвигаем иконки влево, ближе к аватару
+  position: 'absolute', // Абсолютное позиционирование для SettingsIcon
+  right: '24px', // Смещаем иконку вправо
+  top: '0px', // Смещаем иконку вверх   
 });
 
 const InputSection = styled(Box)({
@@ -92,16 +122,33 @@ const StyledTextField = styled(TextField)({
 });
 
 const ChatButton = styled(Button)({
-  backgroundColor: '#3B82F6', // Синий цвет
-  color: '#ffffff', // Белый текст
+  backgroundColor: '#3B82F6', 
+  color: '#ffffff', 
   borderRadius: '8px',
   padding: '8px 16px',
   width: '262px', 
   height: '40px', 
-  textTransform: 'none', 
+  textTransform: 'none',   
+  fontWeight: 'bold', 
+  fontSize: '16px', 
+  lineHeight: '24px',
+  marginBottom: '32px',
+  marginTop: 'auto',
   '&:hover': {
-    backgroundColor: '#2563EB', // Темно-синий цвет при наведении
+    backgroundColor: '#2563EB', 
   },
+});
+
+const StyledTypography = styled(Typography)({
+  color: 'rgba(31, 41, 55, 1)', 
+  fontFamily: 'Roboto, sans-serif', 
+  fontSize: '30px', 
+  fontWeight: 700, 
+  lineHeight: '36px',  
+  marginTop: '32px',
+  marginBottom: '24px',
+  width: '630px',
+  textAlign: 'left',
 });
 
 function ProfilePage() {
@@ -123,19 +170,24 @@ function ProfilePage() {
 
   return (
     <Root>
-      <Container>
+      <StyledTypography variant="h1">
+        Профиль
+      </StyledTypography>        
+      <Container>        
         <Header>
-          <ProfileIcon variant="square" />
-          <Box display="flex" gap="8px">
-            {/* Используем кастомную иконку для Camera */}
-            <IconButton onClick={handleChangeAvatar}>
-              <img src={CameraIcon} alt="Camera" style={{ width: '24px', height: '24px' }} />
-            </IconButton>
-            {/* Используем кастомную иконку для Settings */}
-            <IconButton onClick={handleSettingsClick}>
-              <img src={SettingsIcon} alt="Settings" style={{ width: '24px', height: '24px' }} />
-            </IconButton>
+          <Box position="relative"> {/* Обертка для аватара и иконки камеры */}
+            <ProfileIcon variant="square" />
+            <CameraIconWrapper>
+              <IconButtonStyled onClick={handleChangeAvatar}>
+                <img src={CameraIcon} alt="Camera"/>
+              </IconButtonStyled>
+            </CameraIconWrapper>
           </Box>
+          <IconsContainer>
+            <SettingsIconStyled onClick={handleSettingsClick}>
+              <img src={SettingsIcon} alt="Settings"/>
+            </SettingsIconStyled>
+          </IconsContainer>
         </Header>
         <InputSection>
           <InputWrapper>

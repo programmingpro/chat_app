@@ -26,8 +26,7 @@
 /* Стили для текста внутри кнопок */
 .Button {
   color: #F9FAFB;
-  font-size: 16px;
-  font-family: Inter;
+  font-size: 16px;  
   font-weight: 700;
   line-height: 24px;
   word-wrap: break-word;
