@@ -1,0 +1,6 @@
+export enum RegistrationFailureCause {
+    EMAIL_ALREADY_EXISTS = 'EMAIL_ALREADY_EXISTS',
+    INVALID_EMAIL = 'INVALID_EMAIL',
+    WEAK_PASSWORD = 'WEAK_PASSWORD',
+    OTHER = 'OTHER'
+}
