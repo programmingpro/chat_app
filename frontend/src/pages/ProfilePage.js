@@ -5,6 +5,7 @@ import {
   TextField,
   Typography,
   Avatar,
+  IconButton,
 } from '@mui/material';
 import { styled } from '@mui/system';
 import { useNavigate } from 'react-router-dom'; // Для навигации
