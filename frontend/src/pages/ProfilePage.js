@@ -165,7 +165,7 @@ function ProfilePage() {
 
   const handleSettingsClick = () => {
     // Логика для перехода к настройкам
-    console.log('Settings Click');
+    navigate('/settings');
   };
 
   return (

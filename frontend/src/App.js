@@ -4,6 +4,7 @@ import LoginPage from './pages/LoginPage';
 import HomePage from './pages/HomePage'; 
 import RegistrationPage from './pages/RegistrationPage';
 import ProfilePage from './pages/ProfilePage';
+import UserSettings from './pages/UserSettings'
 import './App.css';
 
 const App = () => {
@@ -21,6 +22,9 @@ const App = () => {
 
         {/* Страница пользователя */}
         <Route path="/profile" element={<ProfilePage />} />
+
+        {/* Страница настроек пользователя*/}
+        <Route path="/settings" element={<UserSettings />} />
       </Routes>
     </Router>
   );
