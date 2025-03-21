@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { Box, Typography, TextField, Button, Card, CardContent } from '@mui/material';
 import { styled } from '@mui/system';
 import { Link } from 'react-router-dom';
@@ -6,6 +6,7 @@ import cyapLogo from '../assets/cyap-logo.svg';
 import { IconButton } from '@mui/material';
 import VkIcon from '../assets/vk-icon.svg';
 import GIcon from '../assets/G-icon.svg';
+import { ThemeContext } from './ThemeContext';
 
 const Container = styled(Box)({
   width: '580px',
@@ -98,8 +99,10 @@ const StyledButton = styled(Button)({
 });
 
 const RegistrationPage = () => {
+  const { isDarkMode } = useContext(ThemeContext);
+
   return (
-    <div className="LoginPage" style={{ width: 1440, height: 800, paddingLeft: 130, paddingRight: 130, paddingTop: 32, paddingBottom: 32, background: 'white', position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'flex-start' }}>
+    <div className="LoginPage" style={{ width: 1440, height: 800, paddingLeft: 130, paddingRight: 130, paddingTop: 32, paddingBottom: 32, background: isDarkMode ? '#1F2937' : 'white', position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'flex-start' }}>
       {/* Фоновый SVG  */}
       <div className="Frame3338" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0 }}>
         <svg width="1440" height="800" viewBox="0 0 1440 800" fill="none" xmlns="http://www.w3.org/2000/svg">

@@ -2,8 +2,25 @@ import React from 'react';
 
 const Background = () => {
   return (
-    <div className="Frame3338" style={{ position: 'absolute', top: '0', left: '0', zIndex: '0' }}>
-      <svg width="1440" height="896" viewBox="0 0 1440 896" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <div
+      className="Frame3338"
+      style={{
+        position: 'absolute', // Абсолютное позиционирование
+        top: 0, // Привязка к верхнему краю
+        left: 0, // Привязка к левому краю
+        width: '100vw', // Растягиваем на всю ширину экрана
+        height: '100vh', // Растягиваем на всю высоту экрана
+        zIndex: 0, // Убедимся, что Background находится под другими элементами
+        overflow: 'hidden', // Убираем скролл, если SVG выходит за пределы экрана
+      }}
+    >
+      <svg
+        width="100%" // Растягиваем SVG на всю ширину контейнера
+        height="100%" // Растягиваем SVG на всю высоту контейнера
+        viewBox="0 0 1440 896" // Сохраняем пропорции SVG
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
         <g opacity="0.3" filter="url(#filter0_f_9_241)">
           <path
             fillRule="evenodd"

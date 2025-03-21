@@ -1,4 +1,4 @@
-import React, { useState } from 'react'; 
+import React, { useState, useContext } from 'react'; 
 import {
   Box,
   Typography,
@@ -12,9 +12,12 @@ import {
 } from '@mui/material';
 import { ArrowBack, Notifications } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { ThemeContext } from '../pages/ThemeContext';
+import Background from '../components/Background/Background';
 
 const UserSettings = () => {
   const navigate = useNavigate();
+  const { isDarkMode, toggleDarkMode } = useContext(ThemeContext);
 
   // Обработчик для перехода на страницу профиля
   const handleGoBack = () => {
@@ -31,13 +34,18 @@ const UserSettings = () => {
   return (
     <Box
       sx={{
-        width: '100%',
-        height: '100%',
-        backgroundColor: '#f9fafb',
+        width: '100vw', // Растягиваем на всю ширину экрана
+        height: '100vh', // Растягиваем на всю высоту экрана
+        backgroundColor: isDarkMode ? '#1F2937' : '#f9fafb',
         p: 4,
         boxSizing: 'border-box',
+        position: 'relative',
+        overflow: 'hidden', // Убираем скролл, если контент выходит за пределы экрана
       }}
     >
+      {/* Добавляем Background */}
+      <Background />
+
       {/* Навигационная панель */}
       <Box
         sx={{
@@ -46,6 +54,7 @@ const UserSettings = () => {
           justifyContent: 'space-between',
           height: 40,
           position: 'relative', 
+          zIndex: 1, 
         }}
       >
         {/* Кнопка "Назад" и текст "Настройки" */}
@@ -61,7 +70,7 @@ const UserSettings = () => {
             <ArrowBack
               sx={{
                 fontSize: 24,
-                color: 'rgba(31, 41, 55, 1)',
+                color: isDarkMode ? '#F9FAFB' : 'rgba(31, 41, 55, 1)', 
               }}
             />
           </IconButton>
@@ -72,7 +81,8 @@ const UserSettings = () => {
             component="span"
             sx={{
               position: 'absolute',
-              left: 'calc((100% - 870px) / 2 + 40px)', 
+              left: 'calc((100% - 870px) / 2 + 40px)',
+              color: isDarkMode ? '#F9FAFB' : 'rgba(31, 41, 55, 1)', 
             }}
           >
             Настройки
@@ -90,7 +100,7 @@ const UserSettings = () => {
           }}
         >
           <IconButton>
-            <Notifications sx={{ fontSize: 24, color: 'rgba(31, 41, 55, 1)' }} />
+            <Notifications sx={{ fontSize: 24, color: isDarkMode ? '#F9FAFB' : 'rgba(31, 41, 55, 1)' }} />
           </IconButton>
           <Avatar
             src="https://via.placeholder.com/40" // Замените на реальный URL аватара
@@ -99,7 +109,7 @@ const UserSettings = () => {
         </Box>
       </Box>
 
-      {/* Основной контент страницы */}
+      {/* Основной контент страницы (карточка с настройками) */}
       <Box
         sx={{
           width: 780,
@@ -108,12 +118,14 @@ const UserSettings = () => {
           p: 4,
           borderRadius: 2,
           boxShadow: '0 4px 8px rgba(229, 231, 235, 1)',
-          backgroundColor: '#ffffff',
+          backgroundColor: isDarkMode ? '#111827' : '#ffffff', 
+          zIndex: 1, 
+          position: 'relative', 
         }}
       >
         {/* Раздел "Пароль" */}
         <FormGroup>
-          <Typography variant="h6" sx={{ mb: 2 }}>
+          <Typography variant="h6" sx={{ mb: 2, color: isDarkMode ? '#F9FAFB' : 'rgba(31, 41, 55, 1)' }}> 
             Пароль
           </Typography>
           <TextField
@@ -122,7 +134,20 @@ const UserSettings = () => {
             size="small"
             label="Существующий пароль"
             defaultValue="*******"
-            sx={{ mb: 3 }}
+            sx={{ 
+              mb: 3,
+              '& .MuiInputBase-input': {
+                color: isDarkMode ? '#F9FAFB' : 'rgba(31, 41, 55, 1)', 
+              },
+              '& .MuiOutlinedInput-root': {
+                '& fieldset': {
+                  borderColor: isDarkMode ? '#374151' : 'rgba(31, 41, 55, 1)', 
+                },
+              },
+              '& .MuiInputLabel-root': {
+                color: isDarkMode ? '#9CA3AF' : 'rgba(31, 41, 55, 1)', 
+              },
+            }}
           />
           <TextField
             fullWidth
@@ -130,7 +155,20 @@ const UserSettings = () => {
             size="small"
             label="Новый пароль"
             defaultValue="*******"
-            sx={{ mb: 3 }}
+            sx={{ 
+              mb: 3,
+              '& .MuiInputBase-input': {
+                color: isDarkMode ? '#F9FAFB' : 'rgba(31, 41, 55, 1)', 
+              },
+              '& .MuiOutlinedInput-root': {
+                '& fieldset': {
+                  borderColor: isDarkMode ? '#374151' : 'rgba(31, 41, 55, 1)', 
+                },
+              },
+              '& .MuiInputLabel-root': {
+                color: isDarkMode ? '#9CA3AF' : 'rgba(31, 41, 55, 1)', 
+              },
+            }}
           />
           <TextField
             fullWidth
@@ -138,41 +176,84 @@ const UserSettings = () => {
             size="small"
             label="Повторите пароль"
             defaultValue="*******"
-            sx={{ mb: 3 }}
+            sx={{ 
+              mb: 3,
+              '& .MuiInputBase-input': {
+                color: isDarkMode ? '#F9FAFB' : 'rgba(31, 41, 55, 1)', 
+              },
+              '& .MuiOutlinedInput-root': {
+                '& fieldset': {
+                  borderColor: isDarkMode ? '#374151' : 'rgba(31, 41, 55, 1)', 
+                },
+              },
+              '& .MuiInputLabel-root': {
+                color: isDarkMode ? '#9CA3AF' : 'rgba(31, 41, 55, 1)', 
+              },
+            }}
           />
           <FormControlLabel
-            control={<Checkbox defaultChecked color="primary" />}
+            control={
+              <Checkbox 
+                defaultChecked 
+                sx={{
+                  color: isDarkMode ? '#3B82F6' : 'primary', 
+                  '&.Mui-checked': {
+                    color: isDarkMode ? '#3B82F6' : 'primary', 
+                  },
+                }}
+              />
+            }
             label="Двухфакторная аутентификация"
+            sx={{ color: isDarkMode ? '#F9FAFB' : 'rgba(31, 41, 55, 1)' }} 
           />
         </FormGroup>
 
         {/* Раздел "Уведомления" */}
-        <Typography variant="h6" sx={{ mt: 4, mb: 2 }}>
+        <Typography variant="h6" sx={{ mt: 4, mb: 2, color: isDarkMode ? '#F9FAFB' : 'rgba(31, 41, 55, 1)' }}> 
           Уведомления
         </Typography>
         <FormGroup>
           <FormControlLabel
             control={
               <Checkbox
-                checked={pushNotificationsEnabled} // Состояние чекбокса
-                onChange={handlePushNotificationsChange} // Обработчик изменения
-                color="primary"
+                checked={pushNotificationsEnabled} 
+                onChange={handlePushNotificationsChange} 
+                sx={{
+                  color: isDarkMode ? '#3B82F6' : 'primary', 
+                  '&.Mui-checked': {
+                    color: isDarkMode ? '#3B82F6' : 'primary', 
+                  },
+                }}
               />
             }
             label="Пуш-уведомления"
+            sx={{ color: isDarkMode ? '#F9FAFB' : 'rgba(31, 41, 55, 1)' }} 
           />
           <FormControlLabel
-            control={<Checkbox color="primary" />}
+            control={
+              <Checkbox
+                sx={{
+                  color: isDarkMode ? '#3B82F6' : 'primary', 
+                  '&.Mui-checked': {
+                    color: isDarkMode ? '#3B82F6' : 'primary', 
+                  },
+                }}
+              />
+            }
             label="Звук уведомлений"
+            sx={{ color: isDarkMode ? '#F9FAFB' : 'rgba(31, 41, 55, 1)' }} 
           />
         </FormGroup>
 
         {/* Переключатель для темной темы */}
         <Box sx={{ mt: 4, display: 'flex', alignItems: 'center' }}>
-          <Typography variant="body1" sx={{ mr: 2 }}>
+          <Typography variant="body1" sx={{ mr: 2, color: isDarkMode ? '#F9FAFB' : 'rgba(31, 41, 55, 1)' }}>
             Тёмная тема
           </Typography>
-          <Switch />
+          <Switch 
+            checked={isDarkMode}
+            onChange={toggleDarkMode} 
+          />
         </Box>
       </Box>
     </Box>

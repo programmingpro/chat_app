@@ -6,9 +6,11 @@ import RegistrationPage from './pages/RegistrationPage';
 import ProfilePage from './pages/ProfilePage';
 import UserSettings from './pages/UserSettings'
 import './App.css';
+import { ThemeProvider } from './pages/ThemeContext';
 
 const App = () => {
   return (
+    <ThemeProvider>
     <Router>
       <Routes>
         {/* Главная страница */}
@@ -18,7 +20,7 @@ const App = () => {
         <Route path="/login" element={<LoginPage />} />
 
         {/* Страница регистрации */}
-        <Route path="/register" element={<RegistrationPage />} />,
+        <Route path="/register" element={<RegistrationPage />} />
 
         {/* Страница пользователя */}
         <Route path="/profile" element={<ProfilePage />} />
@@ -27,6 +29,7 @@ const App = () => {
         <Route path="/settings" element={<UserSettings />} />
       </Routes>
     </Router>
+    </ThemeProvider>
   );
 };
 

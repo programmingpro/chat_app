@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import {
   Box,
   Button,
@@ -11,6 +11,7 @@ import { styled } from '@mui/system';
 import { useNavigate } from 'react-router-dom'; 
 import CameraIcon from '../assets/CameraIcon.svg'; 
 import SettingsIcon from '../assets/SettingsIcon.svg'; 
+import { ThemeContext } from './ThemeContext';
 
 const Root = styled(Box)({
   width: '100%',
@@ -19,8 +20,6 @@ const Root = styled(Box)({
   justifyContent: 'center',
   alignItems: 'center',
   flexDirection: 'column', 
-  alignItems: 'center',
-  backgroundColor: '#F9FAFB',
 });
 
 const Container = styled(Box)({
@@ -55,10 +54,10 @@ const ProfileIcon = styled(Avatar)({
 const IconButtonStyled = styled(IconButton)({
   backgroundColor: '#3B82F6', 
   color: '#ffffff', 
-  borderRadius: '50%', // Круглая форма для CameraIcon
+  borderRadius: '50%', 
   padding: '8px',
-  width: '40px', // Размер кнопки
-  height: '40px', // Размер кнопки
+  width: '40px', 
+  height: '40px', 
   '&:hover': {
     backgroundColor: '#2563EB',
   },
@@ -71,7 +70,7 @@ const IconButtonStyled = styled(IconButton)({
 const SettingsIconStyled = styled(IconButton)({
   backgroundColor: '#3B82F6', 
   color: '#ffffff', 
-  borderRadius: '8px', // Квадратная форма со скруглением для SettingsIcon
+  borderRadius: '8px', 
   padding: '8px',
   width: '40px', // Размер кнопки
   height: '40px', // Размер кнопки
@@ -79,22 +78,22 @@ const SettingsIconStyled = styled(IconButton)({
     backgroundColor: '#2563EB',
   },
   '& img': {
-    width: '24px', // Размер иконки внутри кнопки
-    height: '24px', // Размер иконки внутри кнопки
+    width: '24px', 
+    height: '24px', 
   },
 });
 
 const CameraIconWrapper = styled(Box)({
-  position: 'absolute', // Абсолютное позиционирование для CameraIcon
-  left: '70px', // Смещаем иконку влево
-  top: '79%', // Центрируем по вертикали
-  transform: 'translateY(-50%)', // Корректируем позиционирование
+  position: 'absolute', 
+  left: '70px', 
+  top: '79%', 
+  transform: 'translateY(-50%)', 
 });
 
 const IconsContainer = styled(Box)({
-  position: 'absolute', // Абсолютное позиционирование для SettingsIcon
-  right: '24px', // Смещаем иконку вправо
-  top: '0px', // Смещаем иконку вверх   
+  position: 'absolute', 
+  right: '24px', 
+  top: '0px', 
 });
 
 const InputSection = styled(Box)({
@@ -151,8 +150,9 @@ const StyledTypography = styled(Typography)({
   textAlign: 'left',
 });
 
-function ProfilePage() {
-  const navigate = useNavigate(); // Хук для навигации
+const ProfilePage = () => {
+  const navigate = useNavigate();
+  const { isDarkMode } = useContext(ThemeContext);
 
   const handleChatListClick = () => {
     navigate('/chat-list'); // Переход на страницу списка чатов
@@ -169,8 +169,8 @@ function ProfilePage() {
   };
 
   return (
-    <Root>
-      <StyledTypography variant="h1">
+    <Root sx={{ backgroundColor: isDarkMode ? '#1F2937' : '#F9FAFB' }}>
+      <StyledTypography sx={{ color: isDarkMode ? '#FFFFFF' : '#1F2937' }}>
         Профиль
       </StyledTypography>        
       <Container>        
@@ -192,13 +192,13 @@ function ProfilePage() {
         <InputSection>
           <InputWrapper>
             <Box flex={1}>
-              <Typography variant="caption" color="textSecondary">
+              <Typography variant="caption" color={isDarkMode ? 'textSecondary' : 'textPrimary'}>
                 Имя
               </Typography>
               <StyledTextField variant="outlined" defaultValue="Ярополк" />
             </Box>
             <Box flex={1}>
-              <Typography variant="caption" color="textSecondary">
+              <Typography variant="caption" color={isDarkMode ? 'textSecondary' : 'textPrimary'}>
                 Фамилия
               </Typography>
               <StyledTextField variant="outlined" defaultValue="Иванов" />
@@ -206,13 +206,13 @@ function ProfilePage() {
           </InputWrapper>
           <InputWrapper>
             <Box flex={1}>
-              <Typography variant="caption" color="textSecondary">
+              <Typography variant="caption" color={isDarkMode ? 'textSecondary' : 'textPrimary'}>
                 Email
               </Typography>
               <StyledTextField variant="outlined" defaultValue="ivanov@yandex.ru" />
             </Box>
             <Box flex={1}>
-              <Typography variant="caption" color="textSecondary">
+              <Typography variant="caption" color={isDarkMode ? 'textSecondary' : 'textPrimary'}>
                 Имя аккаунта
               </Typography>
               <StyledTextField variant="outlined" defaultValue="Yaropolk" />
@@ -225,6 +225,6 @@ function ProfilePage() {
       </Container>
     </Root>
   );
-}
+};
 
 export default ProfilePage;

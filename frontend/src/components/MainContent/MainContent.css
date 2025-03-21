@@ -36,3 +36,12 @@
 .Buttons:hover {
   background: #1769aa; /* Цвет фона при наведении */
 }
+
+Frame3356.dark {
+  background-color: #1F2937;
+}
+
+.Buttons.dark {
+  background-color: #3B82F6;
+  color: #FFFFFF;
+}

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { Box, Typography, TextField, Button, Card, CardContent, Stack } from '@mui/material';
 import { styled } from '@mui/system';
 import { Link, useNavigate } from 'react-router-dom';
@@ -6,7 +6,7 @@ import cyapLogo from '../assets/cyap-logo.svg';
 import { IconButton } from '@mui/material'; 
 import VkIcon from '../assets/vk-icon.svg';
 import GIcon from '../assets/G-icon.svg';
-
+import { ThemeContext } from './ThemeContext';
 
 const Container = styled(Box)({
   width: '580px',
@@ -45,14 +45,14 @@ const LogoText = styled('svg')({
   top: '5.359px',
 });
 
-const Description = styled(Typography)({
-  color: 'rgba(31, 41, 55, 1)', 
+const Description = styled(Typography)(({ isDarkMode }) => ({
+  color: isDarkMode ? '#F9FAFB' : 'rgba(31, 41, 55, 1)', // Изменяем цвет текста в зависимости от темы
   fontSize: '24px',
   lineHeight: '32px',
   textAlign: 'left',
   padding: '0 0 0 0', 
   marginBottom: '40px', 
-});
+}));
 
 const Frame = styled(Box)({
   display: 'flex',
@@ -88,8 +88,10 @@ const RegisterButton = styled(Typography)({
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const { isDarkMode } = useContext(ThemeContext); 
+
   return (
-    <div className="LoginPage" style={{ width: 1440, height: 800, paddingLeft: 130, paddingRight: 130, paddingTop: 32, paddingBottom: 32, background: 'white', position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'flex-start' }}>
+    <div className="LoginPage" style={{ width: 1440, height: 800, paddingLeft: 130, paddingRight: 130, paddingTop: 32, paddingBottom: 32, background: isDarkMode ? '#1F2937' : 'white', position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'flex-start' }}>
       {/* Фоновый SVG */}
       <div className="Frame3338" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0 }}>
         <svg width="1440" height="800" viewBox="0 0 1440 800" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -120,14 +122,14 @@ const LoginPage = () => {
               <img src={cyapLogo} alt="CyaP Logo" style={{ width: 75, height: 40 }} />
             </LogoContainer>
             <Frame>
-              <Description>
+              <Description isDarkMode={isDarkMode}> {/* Передаем isDarkMode в Description */}
                 Организуйте свои чаты, держите связь с друзьями и коллегами, делитесь файлами, создавайте групповые обсуждения — всё в одном месте.
               </Description>
             </Frame>
             <RegisterFrame>
               <RegisterLink>У вас ещё нет аккаунта?</RegisterLink>
               <Link to="/register" style={{ textDecoration: 'none' }}>
-              <RegisterButton>Зарегистрироваться</RegisterButton>
+                <RegisterButton>Зарегистрироваться</RegisterButton>
               </Link>
             </RegisterFrame>
           </Container>
@@ -136,26 +138,26 @@ const LoginPage = () => {
         {/* Правый блок (форма входа) */}
         <Card sx={{ maxWidth: 380, boxShadow: 1, borderRadius: 2, p: 3 }}>
           <CardContent>
-          <Typography
+            <Typography
               variant="h6"
               style={{
-              color: 'rgba(31, 41, 55, 1)', 
-              fontFamily: 'Roboto, sans-serif', 
-              fontWeight: 700, 
-              fontSize: '24px', 
-              lineHeight: '32px', 
-              letterSpacing: 'normal', 
-              textAlign: 'left', 
-              padding: 0, 
-              margin: 0,
-              marginBottom: 24, 
-            }}
-          >
+                color: 'rgba(31, 41, 55, 1)', 
+                fontFamily: 'Roboto, sans-serif', 
+                fontWeight: 700, 
+                fontSize: '24px', 
+                lineHeight: '32px', 
+                letterSpacing: 'normal', 
+                textAlign: 'left', 
+                padding: 0, 
+                margin: 0,
+                marginBottom: 24, 
+              }}
+            >
               Вход в аккаунт
-          </Typography>
+            </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <Box sx={{ mb: 0.5 }}>
-                <Typography variant="body2" color="#6B7180" sx={{  fontSize: 12 }}>
+                <Typography variant="body2" color="#6B7180" sx={{ fontSize: 12 }}>
                   Email или логин
                 </Typography>
                 <TextField
@@ -173,63 +175,63 @@ const LoginPage = () => {
                 />
               </Box>
               <Box sx={{ mb: -1 }}>
-              <Typography variant="caption" sx={{ color: 'rgba(107, 114, 128, 1)', fontSize: 12 }}>
-                Пароль
-              </Typography>
-              <TextField
-                variant="outlined"
-                fullWidth
-                size="small"
-                type="password"
-                placeholder="******"
-                sx={{
-                  mt: 1,
-                  backgroundColor: 'rgba(249, 250, 251, 1)',
-                  '& .MuiOutlinedInput-notchedOutline': {
-                    borderColor: 'rgba(209, 213, 219, 1)',
-                  },
-                }}
-              />
-            </Box>
-            <Typography variant="body2" color="#6B7180" align="right" mt={-1}>
-              Забыли пароль?
-            </Typography>
-          <Box mt={2}>
-            <Button
-              fullWidth
-              variant="contained"        
-              sx={{
-                backgroundColor: '#3B82F6',
-                borderRadius: 1.5,
-                fontFamily: 'Inter, sans-serif',
-                fontWeight: 700,
-                fontSize: '16px',
-                lineHeight: '24px',                                               
-                color: '#FFFFFF',
-                textTransform: 'none',
-                ':hover': {
-                  backgroundColor: '#1769aa',
-                },
-              }}
-              onClick={() => navigate('/profile')}
-            >
-              Войти
-            </Button>
-          </Box>
-          <Box mt={2}>
-            <Typography variant="body2" color="#6B7180" align="center">
-              Войти с помощью
-            </Typography>
-            <Box display="flex" justifyContent="center" mt={1}>              
-              <IconButton aria-label="vk" sx={{ color: 'rgba(0, 119, 255, 1)' }}>
-                <img src={VkIcon} alt="VK" style={{ width: 42.88, height: 32 }} />
-              </IconButton>
-              <IconButton aria-label="gmail" sx={{ color: 'rgba(220, 78, 65, 1)' }}>
-                <img src={GIcon} alt="gmail" style={{ width: 42.88, height: 32 }} />
-              </IconButton>
+                <Typography variant="caption" sx={{ color: 'rgba(107, 114, 128, 1)', fontSize: 12 }}>
+                  Пароль
+                </Typography>
+                <TextField
+                  variant="outlined"
+                  fullWidth
+                  size="small"
+                  type="password"
+                  placeholder="******"
+                  sx={{
+                    mt: 1,
+                    backgroundColor: 'rgba(249, 250, 251, 1)',
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'rgba(209, 213, 219, 1)',
+                    },
+                  }}
+                />
               </Box>
-            </Box>
-          </Box>  
+              <Typography variant="body2" color="#6B7180" align="right" mt={-1}>
+                Забыли пароль?
+              </Typography>
+              <Box mt={2}>
+                <Button
+                  fullWidth
+                  variant="contained"        
+                  sx={{
+                    backgroundColor: '#3B82F6',
+                    borderRadius: 1.5,
+                    fontFamily: 'Inter, sans-serif',
+                    fontWeight: 700,
+                    fontSize: '16px',
+                    lineHeight: '24px',                                               
+                    color: '#FFFFFF',
+                    textTransform: 'none',
+                    ':hover': {
+                      backgroundColor: '#1769aa',
+                    },
+                  }}
+                  onClick={() => navigate('/profile')}
+                >
+                  Войти
+                </Button>
+              </Box>
+              <Box mt={2}>
+                <Typography variant="body2" color="#6B7180" align="center">
+                  Войти с помощью
+                </Typography>
+                <Box display="flex" justifyContent="center" mt={1}>              
+                  <IconButton aria-label="vk" sx={{ color: 'rgba(0, 119, 255, 1)' }}>
+                    <img src={VkIcon} alt="VK" style={{ width: 42.88, height: 32 }} />
+                  </IconButton>
+                  <IconButton aria-label="gmail" sx={{ color: 'rgba(220, 78, 65, 1)' }}>
+                    <img src={GIcon} alt="gmail" style={{ width: 42.88, height: 32 }} />
+                  </IconButton>
+                </Box>
+              </Box>
+            </Box>  
           </CardContent>
         </Card>
       </div>

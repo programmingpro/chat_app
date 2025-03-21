@@ -1,8 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import './MainContent.css'; 
+import './MainContent.css';
 
-const MainContent = () => {
+const MainContent = ({ isDarkMode }) => {
   const navigate = useNavigate();
 
   const handleLoginClick = () => {
@@ -14,11 +14,11 @@ const MainContent = () => {
   };
 
   return (
-    <div className="Frame3356">
-      <div className="Buttons" onClick={handleSignUpClick}>
+    <div className={`Frame3356 ${isDarkMode ? 'dark' : ''}`}>
+      <div className={`Buttons ${isDarkMode ? 'dark' : ''}`} onClick={handleSignUpClick}>
         <div className="Button">Создать аккаунт</div>
       </div>
-      <div className="Buttons" onClick={handleLoginClick}>
+      <div className={`Buttons ${isDarkMode ? 'dark' : ''}`} onClick={handleLoginClick}>
         <div className="Button">Войти</div>
       </div>
     </div>
