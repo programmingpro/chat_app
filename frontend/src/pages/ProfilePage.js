@@ -22,23 +22,24 @@ const Root = styled(Box)({
   flexDirection: 'column', 
 });
 
-const Container = styled(Box)({
+const Container = styled(Box)(({ isDarkMode }) => ({
   width: '580px', 
   height: '368px', 
-  backgroundColor: '#ffffff',
+  backgroundColor: isDarkMode ? '#111827' : '#ffffff',
   borderRadius: '12px',
   boxShadow: '0 8px 16px rgba(229, 231, 235, 0.8)',
   padding: '24px',
   display: 'flex',
   flexDirection: 'column',
   gap: '24px',
-});
+  border: isDarkMode ? '1px solid #374151' : 'none',
+}));
 
 const Header = styled(Box)({
   display: 'flex',
   justifyContent: 'space-between',
   alignItems: 'center',
-  position: 'relative', // Добавляем relative для позиционирования иконки
+  position: 'relative', 
 });
 
 const ProfileIcon = styled(Avatar)({
@@ -108,7 +109,7 @@ const InputWrapper = styled(Box)({
   gap: '16px',
 });
 
-const StyledTextField = styled(TextField)({
+const StyledTextField = styled(TextField)(({ isDarkMode  }) => ({
   width: '100%',
   '& .MuiInputBase-root': {
     fontSize: '16px',
@@ -116,9 +117,22 @@ const StyledTextField = styled(TextField)({
     minHeight: '40px',
     '& input': {
       padding: '8px 14px',
+      color: isDarkMode ? '#F9FAFB' : '#111827',
     },
   },
-});
+    '& .MuiOutlinedInput-root': {
+    '& fieldset': {
+      borderColor: isDarkMode ? '#374151' : '#E5E7EB',
+    },
+    '&:hover fieldset': {
+      borderColor: isDarkMode ? '#4B5563' : '#D1D5DB',
+    },
+    color: isDarkMode ? '#F9FAFB' : '#111827',
+  },
+  '& .MuiInputLabel-root': {
+    color: isDarkMode ? '#9CA3AF' : '#6B7280',
+  },
+}));
 
 const ChatButton = styled(Button)({
   backgroundColor: '#3B82F6', 
@@ -173,7 +187,7 @@ const ProfilePage = () => {
       <StyledTypography sx={{ color: isDarkMode ? '#FFFFFF' : '#1F2937' }}>
         Профиль
       </StyledTypography>        
-      <Container>        
+      <Container isDarkMode={isDarkMode}>        
         <Header>
           <Box position="relative"> {/* Обертка для аватара и иконки камеры */}
             <ProfileIcon variant="square" />
@@ -192,30 +206,30 @@ const ProfilePage = () => {
         <InputSection>
           <InputWrapper>
             <Box flex={1}>
-              <Typography variant="caption" color={isDarkMode ? 'textSecondary' : 'textPrimary'}>
+              <Typography variant="caption" color={isDarkMode ? '#9CA3AF' : '#9CA3AF'}>
                 Имя
               </Typography>
-              <StyledTextField variant="outlined" defaultValue="Ярополк" />
+              <StyledTextField variant="outlined" defaultValue="Ярополк" isDarkMode={isDarkMode} />
             </Box>
             <Box flex={1}>
-              <Typography variant="caption" color={isDarkMode ? 'textSecondary' : 'textPrimary'}>
+              <Typography variant="caption" color={isDarkMode ? '#9CA3AF' : '#9CA3AF'}>
                 Фамилия
               </Typography>
-              <StyledTextField variant="outlined" defaultValue="Иванов" />
+              <StyledTextField variant="outlined" defaultValue="Иванов" isDarkMode={isDarkMode} />
             </Box>
           </InputWrapper>
           <InputWrapper>
             <Box flex={1}>
-              <Typography variant="caption" color={isDarkMode ? 'textSecondary' : 'textPrimary'}>
+              <Typography variant="caption" color={isDarkMode ? '#9CA3AF' : '#9CA3AF'}>
                 Email
               </Typography>
-              <StyledTextField variant="outlined" defaultValue="ivanov@yandex.ru" />
+              <StyledTextField variant="outlined" defaultValue="ivanov@yandex.ru" isDarkMode={isDarkMode} />
             </Box>
             <Box flex={1}>
-              <Typography variant="caption" color={isDarkMode ? 'textSecondary' : 'textPrimary'}>
+              <Typography variant="caption" color={isDarkMode ? '#9CA3AF' : '#9CA3AF'}>
                 Имя аккаунта
               </Typography>
-              <StyledTextField variant="outlined" defaultValue="Yaropolk" />
+              <StyledTextField variant="outlined" defaultValue="Yaropolk" isDarkMode={isDarkMode} />
             </Box>
           </InputWrapper>
         </InputSection>

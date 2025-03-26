@@ -16,7 +16,7 @@ const Container = styled(Box)({
   justifyContent: 'center',
   alignItems: 'center',
   alignItems: 'flex-start',
-  gap: '8px',
+  gap: '8px',  
 });
 
 const LogoContainer = styled(Box)({
@@ -46,7 +46,7 @@ const LogoText = styled('svg')({
 });
 
 const Description = styled(Typography)(({ isDarkMode }) => ({
-  color: isDarkMode ? '#F9FAFB' : 'rgba(31, 41, 55, 1)', // Изменяем цвет текста в зависимости от темы
+  color: isDarkMode ? '#F9FAFB' : 'rgba(31, 41, 55, 1)', 
   fontSize: '24px',
   lineHeight: '32px',
   textAlign: 'left',
@@ -85,17 +85,67 @@ const RegisterButton = styled(Typography)({
   marginTop: '16px', 
   cursor: 'pointer', 
 });
+const StyledCard = styled(Card)(({ isDarkMode }) => ({
+  maxWidth: 380,
+  borderRadius: 8,
+  padding: 24,
+  backgroundColor: isDarkMode ? '#111827' : '#ffffff',
+  border: isDarkMode ? '1px solid #374151' : 'none',
+  position: 'relative',
+  zIndex: 2,
+  // Подсветка по периметру (только для темной темы)
+  ...(isDarkMode && {
+    '&::before': {
+      content: '""',
+      position: 'absolute',
+      top: -2,
+      left: -2,
+      right: -2,
+      bottom: -2,
+      borderRadius: 10, // Чуть больше, чем у основной карточки
+      background: 'linear-gradient(135deg, #3B82F6, #2563EB)',
+      zIndex: -1,
+      opacity: 0.3
+    }
+  }),
+  // Стандартная тень для светлой темы
+  ...(!isDarkMode && {
+    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+  })
+}));
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const { isDarkMode } = useContext(ThemeContext); 
 
   return (
-    <div className="LoginPage" style={{ width: 1440, height: 800, paddingLeft: 130, paddingRight: 130, paddingTop: 32, paddingBottom: 32, background: isDarkMode ? '#1F2937' : 'white', position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'flex-start' }}>
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: isDarkMode ? '#1F2937' : 'white',
+      overflow: 'auto',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center'
+    }}>
       {/* Фоновый SVG */}
-      <div className="Frame3338" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0 }}>
-        <svg width="1440" height="800" viewBox="0 0 1440 800" fill="none" xmlns="http://www.w3.org/2000/svg">
-          {/* SVG content */}
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        zIndex: 0
+      }}>
+        <svg 
+          width="100%" 
+          height="100%" 
+          viewBox="0 0 1440 800"
+          preserveAspectRatio="xMidYMid slice" 
+        >
           <g opacity="0.3" filter="url(#filter0_f_45_293)">
             <path fillRule="evenodd" clipRule="evenodd" d="M-192.588 508.767C-158.672 433.342 -142.697 313.097 -44.5975 331.643C53.4468 350.178 102.766 494.875 182.857 579.743C257.51 658.848 365.085 711.423 401.86 804.726C445.018 914.227 464.516 1051.78 385.039 1092.71C306.222 1133.31 180.657 1005.84 72.7503 974.242C-13.1001 949.105 -101.128 1002.34 -171.107 929.876C-241.157 857.336 -200.279 769.214 -204.464 687.169C-207.758 622.602 -215.634 560.02 -192.588 508.767Z" fill="#2563EB"/>
             <path fillRule="evenodd" clipRule="evenodd" d="M785.666 787.463C730.104 761.954 641.305 749.448 655.583 677.034C669.853 604.661 777.107 569.04 840.311 510.323C899.222 455.594 938.711 376.372 1007.9 349.727C1089.1 318.456 1190.9 304.839 1220.7 363.83C1250.26 422.331 1155.29 514.418 1131.31 594.006C1112.23 657.326 1151.08 722.71 1097.1 774.023C1043.07 825.387 978.16 794.658 917.483 797.276C869.732 799.337 823.422 804.797 785.666 787.463Z" fill="#2563EB"/>
@@ -122,7 +172,7 @@ const LoginPage = () => {
               <img src={cyapLogo} alt="CyaP Logo" style={{ width: 75, height: 40 }} />
             </LogoContainer>
             <Frame>
-              <Description isDarkMode={isDarkMode}> {/* Передаем isDarkMode в Description */}
+              <Description isDarkMode={isDarkMode}> 
                 Организуйте свои чаты, держите связь с друзьями и коллегами, делитесь файлами, создавайте групповые обсуждения — всё в одном месте.
               </Description>
             </Frame>
@@ -136,12 +186,19 @@ const LoginPage = () => {
         </div>
 
         {/* Правый блок (форма входа) */}
-        <Card sx={{ maxWidth: 380, boxShadow: 1, borderRadius: 2, p: 3 }}>
+        <Card sx={{ 
+          maxWidth: 380,
+          borderRadius: 2,
+          p: 3,
+          backgroundColor: isDarkMode ? '#111827' : '#ffffff',
+          border: isDarkMode ? '1px solid #374151' : 'none',
+                              
+        }}>
           <CardContent>
             <Typography
               variant="h6"
               style={{
-                color: 'rgba(31, 41, 55, 1)', 
+                color: isDarkMode ? '#FFFFFF' : 'rgba(31, 41, 55, 1)',
                 fontFamily: 'Roboto, sans-serif', 
                 fontWeight: 700, 
                 fontSize: '24px', 
@@ -167,9 +224,21 @@ const LoginPage = () => {
                   placeholder="ivanov@yandex.ru"
                   sx={{
                     mt: 1,
-                    backgroundColor: '#FFFFFF',
-                    '& .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#D1D5DB',
+                    backgroundColor: isDarkMode ? '#111827' : 'white',
+                    '& .MuiOutlinedInput-root': {
+                      '& input': {
+                        color: isDarkMode ? '#F9FAFB' : '#111827',
+                        '&::placeholder': { 
+                          color: isDarkMode ? '#FFFFFF' : '#9CA3AF',
+                          opacity: 1, 
+                        },
+                      },
+                      '& fieldset': {
+                        borderColor: isDarkMode ? '#374151' : '#D1D5DB', // Цвет рамки
+                      },
+                      '&:hover fieldset': {
+                        borderColor: isDarkMode ? '#4B5563' : '#9CA3AF', // Цвет рамки при наведении
+                      },
                     },
                   }}
                 />
@@ -186,9 +255,21 @@ const LoginPage = () => {
                   placeholder="******"
                   sx={{
                     mt: 1,
-                    backgroundColor: 'rgba(249, 250, 251, 1)',
-                    '& .MuiOutlinedInput-notchedOutline': {
-                      borderColor: 'rgba(209, 213, 219, 1)',
+                    backgroundColor:  isDarkMode ? '#111827' : 'white',
+                    '& .MuiOutlinedInput-root': {
+                      '& input': {
+                        color: isDarkMode ? '#F9FAFB' : '#111827', 
+                        '&::placeholder': {
+                          color: isDarkMode ? '#FFFFFF' : '#9CA3AF',
+                          opacity: 1,
+                        },
+                      },
+                      '& fieldset': {
+                        borderColor: isDarkMode ? '#374151' : '#D1D5DB', // Цвет рамки
+                      },
+                      '&:hover fieldset': {
+                        borderColor: isDarkMode ? '#4B5563' : '#9CA3AF', // Цвет рамки при наведении
+                      },
                     },
                   }}
                 />

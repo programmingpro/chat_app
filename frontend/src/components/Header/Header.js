@@ -1,9 +1,26 @@
-import React from 'react';
+import React, { useContext } from 'react';
+import { ThemeContext } from '../../pages/ThemeContext';
 
 const Header = () => {
+  const { isDarkMode } = useContext(ThemeContext);
+
   return (
-    <div className="Frame3359" style={{ alignSelf: 'stretch', height: '164px', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '24px', display: 'flex' }}>
-      <div className="Logo">
+    <div style={{ 
+      width: '780px', 
+      height: '324px', 
+      padding: '0px 20px',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      boxSizing: 'border-box',      
+      margin: '0 auto',
+      justifyContent: 'center',
+    }}>
+      <div style={{ 
+        marginBottom: '20px',
+        display: 'flex',
+        justifyContent: 'center'        
+      }}>
         <svg width="76" height="40" viewBox="0 0 76 40" fill="none" xmlns="http://www.w3.org/2000/svg">
           <g clipPath="url(#clip0_9_250)">
             <path
@@ -34,12 +51,29 @@ const Header = () => {
           </defs>
         </svg>
       </div>
-      <div className="Cyap" style={{ alignSelf: 'stretch', textAlign: 'center', color: '#1F2937', fontSize: '20px', fontFamily: 'Roboto', fontWeight: '700', lineHeight: '28px', wordWrap: 'break-word' }}>
+      <h1 style={{
+        fontSize: '20px',
+        fontWeight: 700,
+        lineHeight: '28px',        
+        color: isDarkMode ? '#111827' : '#1F2937',
+        textAlign: 'center',
+        margin: '0 0 24px 0'       
+        
+      }}>
         Добро пожаловать в Cyap — платформу общения нового поколения!
-      </div>
-      <div style={{ alignSelf: 'stretch', textAlign: 'center', color: '#1F2937', fontSize: '16px', fontFamily: 'Inter', fontWeight: '400', lineHeight: '24px', wordWrap: 'break-word' }}>
+      </h1>      
+      <p style={{
+        fontSize: '16px',
+        lineHeight: '24px',
+        color: isDarkMode ? '#111827' : '#1F2937',
+        fontWeight: 400,
+        textAlign: 'center',
+        margin: '0 0 40px 0',
+        maxWidth: '780px',
+        width: '100%'
+      }}>
         Организуйте свои чаты, держите связь с друзьями и коллегами, делитесь файлами, создавайте групповые обсуждения — всё в одном месте.
-      </div>
+      </p>
     </div>
   );
 };

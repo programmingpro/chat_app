@@ -6,7 +6,7 @@
   justify-content: flex-end;
   align-items: center;
   gap: 20px;
-  display: inline-flex;
+  display: inline-flex;  
 }
 
 /* Стили для кнопок */
@@ -34,7 +34,7 @@
 
 /* Стили для hover-эффекта */
 .Buttons:hover {
-  background: #1769aa; /* Цвет фона при наведении */
+  background: #1769aa; 
 }
 
 Frame3356.dark {

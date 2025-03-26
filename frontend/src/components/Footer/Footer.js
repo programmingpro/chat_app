@@ -8,16 +8,17 @@ const Footer = () => {
     <div
       className="Frame3341"
       style={{
-        alignSelf: 'stretch',
-        height: '156px',
-        padding: '32px 330px',
+        width: '100%',
+        maxWidth: '1200px',
+        margin: '0 auto',
+        padding: '32px 20px', // Уменьшите боковые отступы
         flexDirection: 'column',
         justifyContent: 'flex-start',
-        alignItems: 'flex-start',
+        alignItems: 'center', // Измените на center
         gap: '16px',
         display: 'flex',
-        backgroundColor: isDarkMode ? '#1F2937' : '#F9FAFB', 
-        color: isDarkMode ? '#FFFFFF' : '#1F2937', 
+        backgroundColor: isDarkMode ? '#1F2937' : '#F9FAFB',
+        color: isDarkMode ? '#FFFFFF' : '#1F2937',
       }}
     >
       <div style={{ textAlign: 'center', fontSize: '24px', fontFamily: "'Inter', sans-serif", fontWeight: 700, lineHeight: '32px' }}>

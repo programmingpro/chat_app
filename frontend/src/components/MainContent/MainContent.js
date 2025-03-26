@@ -14,7 +14,13 @@ const MainContent = ({ isDarkMode }) => {
   };
 
   return (
-    <div className={`Frame3356 ${isDarkMode ? 'dark' : ''}`}>
+    <div className={`Frame3356 ${isDarkMode ? 'dark' : ''}`} style={{
+      display: 'flex',
+      justifyContent: 'center',
+      width: '100%',      
+      margin: '0 auto',
+      padding: '0 20px'
+    }}>
       <div className={`Buttons ${isDarkMode ? 'dark' : ''}`} onClick={handleSignUpClick}>
         <div className="Button">Создать аккаунт</div>
       </div>
