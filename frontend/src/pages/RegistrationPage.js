@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { Box, Typography, TextField, Button, Card, CardContent } from '@mui/material';
 import { styled } from '@mui/system';
 import { Link } from 'react-router-dom';
@@ -6,6 +6,7 @@ import cyapLogo from '../assets/cyap-logo.svg';
 import { IconButton } from '@mui/material';
 import VkIcon from '../assets/vk-icon.svg';
 import GIcon from '../assets/G-icon.svg';
+import { ThemeContext } from './ThemeContext';
 
 const Container = styled(Box)({
   width: '580px',
@@ -98,12 +99,36 @@ const StyledButton = styled(Button)({
 });
 
 const RegistrationPage = () => {
+  const { isDarkMode } = useContext(ThemeContext);
+
   return (
-    <div className="LoginPage" style={{ width: 1440, height: 800, paddingLeft: 130, paddingRight: 130, paddingTop: 32, paddingBottom: 32, background: 'white', position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'flex-start' }}>
-      {/* Фоновый SVG  */}
-      <div className="Frame3338" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0 }}>
-        <svg width="1440" height="800" viewBox="0 0 1440 800" fill="none" xmlns="http://www.w3.org/2000/svg">
-          {/* SVG content */}
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: isDarkMode ? '#1F2937' : 'white',
+      overflow: 'auto',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center'
+    }}>
+      {/* Фоновый SVG */}
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        zIndex: 0
+      }}>
+        <svg 
+          width="100%" 
+          height="100%" 
+          viewBox="0 0 1440 800"
+          preserveAspectRatio="xMidYMid slice"
+        >
           <g opacity="0.3" filter="url(#filter0_f_45_293)">
             <path fillRule="evenodd" clipRule="evenodd" d="M-192.588 508.767C-158.672 433.342 -142.697 313.097 -44.5975 331.643C53.4468 350.178 102.766 494.875 182.857 579.743C257.51 658.848 365.085 711.423 401.86 804.726C445.018 914.227 464.516 1051.78 385.039 1092.71C306.222 1133.31 180.657 1005.84 72.7503 974.242C-13.1001 949.105 -101.128 1002.34 -171.107 929.876C-241.157 857.336 -200.279 769.214 -204.464 687.169C-207.758 622.602 -215.634 560.02 -192.588 508.767Z" fill="#2563EB"/>
             <path fillRule="evenodd" clipRule="evenodd" d="M785.666 787.463C730.104 761.954 641.305 749.448 655.583 677.034C669.853 604.661 777.107 569.04 840.311 510.323C899.222 455.594 938.711 376.372 1007.9 349.727C1089.1 318.456 1190.9 304.839 1220.7 363.83C1250.26 422.331 1155.29 514.418 1131.31 594.006C1112.23 657.326 1151.08 722.71 1097.1 774.023C1043.07 825.387 978.16 794.658 917.483 797.276C869.732 799.337 823.422 804.797 785.666 787.463Z" fill="#2563EB"/>

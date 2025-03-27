@@ -1,16 +1,45 @@
-import React from 'react';
+import React, { useContext } from 'react';
+import { ThemeContext } from './ThemeContext';
 
 const Help = () => {
+  const { isDarkMode } = useContext(ThemeContext);
+
   return (
-    <div className="Frame3342" style={{ alignSelf: 'stretch', height: '160px', padding: '32px 330px', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'flex-start', gap: '16px', display: 'flex' }}>
-      <div style={{ textAlign: 'center', color: '#1F2937', fontSize: '24px', fontFamily: 'Roboto', fontWeight: '700', lineHeight: '32px', wordWrap: 'break-word' }}>Помощь</div>
-      <div className="Frame3364" style={{ alignSelf: 'stretch', height: '48px', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'flex-start', gap: '24px', display: 'flex' }}>
-        <div className="Frame3361" style={{ alignSelf: 'stretch', height: '48px', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'flex-start', gap: '4px', display: 'flex' }}>
-          <div className="247" style={{ alignSelf: 'stretch', color: '#1F2937', fontSize: '16px', fontFamily: 'Inter', fontWeight: '400', lineHeight: '24px', wordWrap: 'break-word' }}>
-            Возникли вопросы? Ознакомьтесь с нашей базой знаний или обратитесь в службу поддержки, которая готова помочь 24/7. 🛠️
-          </div>
-        </div>
-      </div>
+    <div style={{ 
+      width: '100%',
+      maxWidth: '780px', 
+      padding: '32px 20px',      
+      display: 'flex',
+      flexDirection: 'column',
+      backgroundColor: isDarkMode ? '#1F2937' : '#F9FAFB',
+      color: isDarkMode ? '#FFFFFF' : '#1F2937',
+      margin: '0 auto',
+      boxSizing: 'border-box'
+    }}>
+      
+      <h2 style={{
+        fontSize: '24px',
+        fontWeight: 700,
+        fontFamily: 'Roboto, sans-serif',
+        textAlign: 'left',
+        margin: '0 0 16px 0',
+        width: '100%'
+      }}>
+        Помощь
+      </h2>
+      
+      <p style={{
+        fontSize: '16px',
+        lineHeight: '24px',
+        fontWeight: 400,
+        fontFamily: 'Inter, sans-serif',
+        textAlign: 'left',
+        margin: 0,
+        width: '100%',
+        wordWrap: 'break-word'
+      }}>
+        Возникли вопросы? Ознакомьтесь с нашей базой знаний или обратитесь в службу поддержки, которая готова помочь 24/7. 🛠️
+      </p>
     </div>
   );
 };
