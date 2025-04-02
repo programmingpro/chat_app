@@ -12,6 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import CameraIcon from '../assets/CameraIcon.svg'; 
 import SettingsIcon from '../assets/SettingsIcon.svg'; 
 import { ThemeContext } from './ThemeContext';
+import { updateUserAvatar } from '../utils/api';
 
 const Root = styled(Box)({
   width: '100%',
@@ -173,8 +174,29 @@ const ProfilePage = () => {
   };
 
   const handleChangeAvatar = () => {
-    // Логика для изменения аватара
-    console.log('Change Avatar');
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        if (file.size > 5 * 1024 * 1024) {
+          alert('Файл слишком большой. Максимальный размер - 5MB');
+          return;
+        }
+        
+        updateUserAvatar(file)
+          .then(response => {
+            console.log('Аватар успешно обновлен:', response);            
+            alert('Аватар успешно обновлен!');
+          })
+          .catch(error => {
+            console.error('Ошибка при обновлении аватара:', error);
+            alert('Не удалось обновить аватар');
+          });
+      }
+    };
+    input.click();
   };
 
   const handleSettingsClick = () => {
