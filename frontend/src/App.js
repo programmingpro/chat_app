@@ -7,6 +7,8 @@ import ProfilePage from './pages/ProfilePage';
 import UserSettings from './pages/UserSettings'
 import './App.css';
 import { ThemeProvider } from './pages/ThemeContext';
+import ChatList from './pages/ChatList';
+
 
 const App = () => {
   return (
@@ -27,6 +29,8 @@ const App = () => {
 
         {/* Страница настроек пользователя*/}
         <Route path="/settings" element={<UserSettings />} />
+
+        <Route path="/chat-list" element={<ChatList />} />
       </Routes>
     </Router>
     </ThemeProvider>
