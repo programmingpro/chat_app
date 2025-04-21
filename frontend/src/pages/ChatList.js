@@ -18,6 +18,7 @@ import NotificationsIcon from '@mui/icons-material/Notifications';
 import SearchIcon from '@mui/icons-material/Search';
 import { ThemeContext } from './ThemeContext';
 import Background from '../components/Background/Background';
+import { useNavigate } from 'react-router-dom';
 
 const SvgIcon = styled('svg')({
   fill: 'none',
@@ -105,7 +106,7 @@ const NotificationList = ({ isDarkMode }) => {
       message: "Были замечены временные перебои в работе чата «Славянские мемы». Сейчас всё стабильно.",
       time: "12:00"
     }
-  ];
+  ];  
 
   return (
     <NotificationBox isDarkMode={isDarkMode}>
@@ -132,12 +133,17 @@ const ChatList = () => {
   const { isDarkMode } = useContext(ThemeContext);
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(3);
+  const navigate = useNavigate();
 
   const toggleNotifications = () => {
     setShowNotifications(!showNotifications);
     if (!showNotifications && unreadCount > 0) {
       setUnreadCount(0);
     }
+  };
+
+  const handleNewChatClick = () => {
+    navigate('/create-chat'); // Переход на страницу создания чата
   };
 
   const chats = [
@@ -413,6 +419,7 @@ const ChatList = () => {
               }}
             >
               <IconButton
+                onClick={handleNewChatClick}
                 sx={{
                   backgroundColor: 'rgba(59, 130, 246, 1)',
                   borderRadius: '50%',

@@ -6,12 +6,12 @@ const Background = () => {
       className="Frame3338"
       style={{
         position: 'absolute', // Абсолютное позиционирование
-        top: 0, // Привязка к верхнему краю
-        left: 0, // Привязка к левому краю
+        top: 0, 
+        left: 0, 
         width: '100vw', // Растягиваем на всю ширину экрана
         height: '100vh', // Растягиваем на всю высоту экрана
-        zIndex: 0, // Убедимся, что Background находится под другими элементами
-        overflow: 'hidden', // Убираем скролл, если SVG выходит за пределы экрана
+        zIndex: 0, 
+        overflow: 'hidden', 
       }}
     >
       <svg
