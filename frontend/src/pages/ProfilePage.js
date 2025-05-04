@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import {
   Box,
   Button,
@@ -6,21 +6,20 @@ import {
   Typography,
   Avatar,
   IconButton,
+  CircularProgress
 } from '@mui/material';
 import { styled } from '@mui/system';
-import { useNavigate } from 'react-router-dom'; 
-import CameraIcon from '../assets/CameraIcon.svg'; 
-import SettingsIcon from '../assets/SettingsIcon.svg'; 
+import { useNavigate } from 'react-router-dom';
 import { ThemeContext } from './ThemeContext';
-import { updateUserAvatar } from '../utils/api';
 
+// Стили (остаются без изменений)
 const Root = styled(Box)({
   width: '100%',
-  minHeight: '100vh', 
+  minHeight: '100vh',
   display: 'flex',
   justifyContent: 'center',
   alignItems: 'center',
-  flexDirection: 'column', 
+  flexDirection: 'column',
 });
 
 const BackgroundSvg = styled('div')({
@@ -34,8 +33,8 @@ const BackgroundSvg = styled('div')({
 });
 
 const Container = styled(Box)(({ isDarkMode }) => ({
-  width: '580px', 
-  height: '368px', 
+  width: '580px',
+  height: '368px',
   backgroundColor: isDarkMode ? '#111827' : '#ffffff',
   borderRadius: '12px',
   boxShadow: '0 8px 16px rgba(229, 231, 235, 0.8)',
@@ -52,62 +51,62 @@ const Header = styled(Box)({
   display: 'flex',
   justifyContent: 'space-between',
   alignItems: 'center',
-  position: 'relative', 
+  position: 'relative',
 });
 
 const ProfileIcon = styled(Avatar)({
   width: '92px',
   height: '92px',
   borderRadius: '46px',
-  backgroundImage: 'url("https://via.placeholder.com/92")', // Замените на реальный URL аватара
+  backgroundImage: 'url("https://via.placeholder.com/92")',
   backgroundSize: 'cover',
   backgroundPosition: 'center',
-  border: '1px solid transparent'
+  border: '1px solid transparent',
 });
 
 const IconButtonStyled = styled(IconButton)({
-  backgroundColor: '#3B82F6', 
-  color: '#ffffff', 
-  borderRadius: '50%', 
+  backgroundColor: '#3B82F6',
+  color: '#ffffff',
+  borderRadius: '50%',
   padding: '8px',
-  width: '40px', 
-  height: '40px', 
+  width: '40px',
+  height: '40px',
   '&:hover': {
     backgroundColor: '#2563EB',
   },
   '& img': {
-    width: '24px', // Размер иконки внутри кнопки
-    height: '24px', // Размер иконки внутри кнопки
+    width: '24px',
+    height: '24px',
   },
 });
 
 const SettingsIconStyled = styled(IconButton)({
-  backgroundColor: '#3B82F6', 
-  color: '#ffffff', 
-  borderRadius: '8px', 
+  backgroundColor: '#3B82F6',
+  color: '#ffffff',
+  borderRadius: '8px',
   padding: '8px',
-  width: '40px', // Размер кнопки
-  height: '40px', // Размер кнопки
+  width: '40px',
+  height: '40px',
   '&:hover': {
     backgroundColor: '#2563EB',
   },
   '& img': {
-    width: '24px', 
-    height: '24px', 
+    width: '24px',
+    height: '24px',
   },
 });
 
 const CameraIconWrapper = styled(Box)({
-  position: 'absolute', 
-  left: '70px', 
-  top: '79%', 
-  transform: 'translateY(-50%)', 
+  position: 'absolute',
+  left: '70px',
+  top: '79%',
+  transform: 'translateY(-50%)',
 });
 
 const IconsContainer = styled(Box)({
-  position: 'absolute', 
-  right: '24px', 
-  top: '0px', 
+  position: 'absolute',
+  right: '24px',
+  top: '0px',
 });
 
 const InputSection = styled(Box)({
@@ -122,7 +121,7 @@ const InputWrapper = styled(Box)({
   gap: '16px',
 });
 
-const StyledTextField = styled(TextField)(({ isDarkMode  }) => ({
+const StyledTextField = styled(TextField)(({ isDarkMode }) => ({
   width: '100%',
   '& .MuiInputBase-root': {
     fontSize: '16px',
@@ -133,7 +132,7 @@ const StyledTextField = styled(TextField)(({ isDarkMode  }) => ({
       color: isDarkMode ? '#F9FAFB' : '#111827',
     },
   },
-    '& .MuiOutlinedInput-root': {
+  '& .MuiOutlinedInput-root': {
     '& fieldset': {
       borderColor: isDarkMode ? '#374151' : '#E5E7EB',
     },
@@ -148,29 +147,29 @@ const StyledTextField = styled(TextField)(({ isDarkMode  }) => ({
 }));
 
 const ChatButton = styled(Button)({
-  backgroundColor: '#3B82F6', 
-  color: '#ffffff', 
+  backgroundColor: '#3B82F6',
+  color: '#ffffff',
   borderRadius: '8px',
   padding: '8px 16px',
-  width: '262px', 
-  height: '40px', 
-  textTransform: 'none',   
-  fontWeight: 'bold', 
-  fontSize: '16px', 
+  width: '262px',
+  height: '40px',
+  textTransform: 'none',
+  fontWeight: 'bold',
+  fontSize: '16px',
   lineHeight: '24px',
   marginBottom: '32px',
   marginTop: 'auto',
   '&:hover': {
-    backgroundColor: '#2563EB', 
+    backgroundColor: '#2563EB',
   },
 });
 
 const StyledTypography = styled(Typography)({
-  color: 'rgba(31, 41, 55, 1)', 
-  fontFamily: 'Roboto, sans-serif', 
-  fontSize: '30px', 
-  fontWeight: 700, 
-  lineHeight: '36px',  
+  color: 'rgba(31, 41, 55, 1)',
+  fontFamily: 'Roboto, sans-serif',
+  fontSize: '30px',
+  fontWeight: 700,
+  lineHeight: '36px',
   marginTop: '32px',
   marginBottom: '24px',
   width: '630px',
@@ -180,50 +179,87 @@ const StyledTypography = styled(Typography)({
 const ProfilePage = () => {
   const navigate = useNavigate();
   const { isDarkMode } = useContext(ThemeContext);
+  const [icons, setIcons] = useState({
+    CameraIcon: null,
+    SettingsIcon: null,
+    loading: true
+  });
+
+  // Ленивая загрузка иконок
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadIcons = async () => {
+      try {
+        const [cameraIcon, settingsIcon] = await Promise.all([
+          import('../assets/CameraIcon.svg').then(module => module.default),
+          import('../assets/SettingsIcon.svg').then(module => module.default)
+        ]);
+
+        if (isMounted) {
+          setIcons({
+            CameraIcon: cameraIcon,
+            SettingsIcon: settingsIcon,
+            loading: false
+          });
+        }
+      } catch (error) {
+        console.error('Error loading icons:', error);
+        if (isMounted) {
+          setIcons(prev => ({ ...prev, loading: false }));
+        }
+      }
+    };
+
+    loadIcons();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleChatListClick = () => {
-    navigate('/chat-list'); // Переход на страницу списка чатов
+    navigate('/chat-list');
   };
 
-  const handleChangeAvatar = () => {
+  const handleChangeAvatar = async () => {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
-    input.onchange = (e) => {
+    input.onchange = async (e) => {
       const file = e.target.files[0];
       if (file) {
         if (file.size > 5 * 1024 * 1024) {
           alert('Файл слишком большой. Максимальный размер - 5MB');
           return;
         }
-        
-        updateUserAvatar(file)
-          .then(response => {
-            console.log('Аватар успешно обновлен:', response);            
-            alert('Аватар успешно обновлен!');
-          })
-          .catch(error => {
-            console.error('Ошибка при обновлении аватара:', error);
-            alert('Не удалось обновить аватар');
-          });
+
+        try {
+          const { updateUserAvatar } = await import('../utils/api');
+          const response = await updateUserAvatar(file);
+          console.log('Аватар успешно обновлен:', response);
+          alert('Аватар успешно обновлен!');
+        } catch (error) {
+          console.error('Ошибка при обновлении аватара:', error);
+          alert('Не удалось обновить аватар');
+        }
       }
     };
     input.click();
   };
 
   const handleSettingsClick = () => {
-    // Логика для перехода к настройкам
     navigate('/settings');
   };
 
   return (
     <Root sx={{ backgroundColor: isDarkMode ? '#1F2937' : '#F9FAFB' }}>
-    <BackgroundSvg>
-        <svg 
-          width="100%" 
-          height="100%" 
+      <BackgroundSvg>
+        <svg
+          width="100%"
+          height="100%"
           viewBox="0 0 1440 800"
-          preserveAspectRatio="xMidYMid slice" 
+          preserveAspectRatio="xMidYMid slice"
         >
           <g opacity="0.3" filter="url(#filter0_f_45_293)">
             <path fillRule="evenodd" clipRule="evenodd" d="M-192.588 508.767C-158.672 433.342 -142.697 313.097 -44.5975 331.643C53.4468 350.178 102.766 494.875 182.857 579.743C257.51 658.848 365.085 711.423 401.86 804.726C445.018 914.227 464.516 1051.78 385.039 1092.71C306.222 1133.31 180.657 1005.84 72.7503 974.242C-13.1001 949.105 -101.128 1002.34 -171.107 929.876C-241.157 857.336 -200.279 769.214 -204.464 687.169C-207.758 622.602 -215.634 560.02 -192.588 508.767Z" fill="#2563EB"/>
@@ -240,25 +276,36 @@ const ProfilePage = () => {
           </defs>
         </svg>
       </BackgroundSvg>
+      
       <StyledTypography sx={{ color: isDarkMode ? '#FFFFFF' : '#1F2937' }}>
         Профиль
-      </StyledTypography>        
-      <Container isDarkMode={isDarkMode}>        
+      </StyledTypography>
+      
+      <Container isDarkMode={isDarkMode}>
         <Header>
-          <Box position="relative"> {/* Обертка для аватара и иконки камеры */}
+          <Box position="relative">
             <ProfileIcon variant="square" />
             <CameraIconWrapper>
               <IconButtonStyled onClick={handleChangeAvatar}>
-                <img src={CameraIcon} alt="Camera"/>
+                {icons.loading ? (
+                  <CircularProgress size={24} color="inherit" />
+                ) : (
+                  <img src={icons.CameraIcon} alt="Camera" style={{ width: '24px', height: '24px' }} />
+                )}
               </IconButtonStyled>
             </CameraIconWrapper>
           </Box>
           <IconsContainer>
             <SettingsIconStyled onClick={handleSettingsClick}>
-              <img src={SettingsIcon} alt="Settings"/>
+              {icons.loading ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                <img src={icons.SettingsIcon} alt="Settings" style={{ width: '24px', height: '24px' }} />
+              )}
             </SettingsIconStyled>
           </IconsContainer>
         </Header>
+        
         <InputSection>
           <InputWrapper>
             <Box flex={1}>
@@ -289,6 +336,7 @@ const ProfilePage = () => {
             </Box>
           </InputWrapper>
         </InputSection>
+        
         <ChatButton variant="contained" onClick={handleChatListClick}>
           Список чатов
         </ChatButton>
