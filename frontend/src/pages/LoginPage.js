@@ -1,125 +1,77 @@
 import React, { useContext } from 'react';
-import { Box, Typography, TextField, Button, Card, CardContent, Stack } from '@mui/material';
-import { styled } from '@mui/system';
+import { 
+  Box, 
+  Typography, 
+  TextField, 
+  Button, 
+  IconButton,
+  Grid,
+  useMediaQuery,
+  useTheme
+} from '@mui/material';
 import { Link, useNavigate } from 'react-router-dom';
 import cyapLogo from '../assets/cyap-logo.svg';
-import { IconButton } from '@mui/material'; 
 import VkIcon from '../assets/vk-icon.svg';
 import GIcon from '../assets/G-icon.svg';
 import { ThemeContext } from './ThemeContext';
 
-const Container = styled(Box)({
-  width: '580px',
-  height: '736px',
-  display: 'flex',
-  flexDirection: 'column',
-  justifyContent: 'center',
-  alignItems: 'center',
-  alignItems: 'flex-start',
-  gap: '8px',  
-});
-
-const LogoContainer = styled(Box)({
-  width: '74.947px',
-  height: '40px',
-  display: 'flex',
-  flexDirection: 'row',
-  alignItems: 'center',
-  justifyContent: 'flex-start',
-});
-
-const LogoBackground = styled('div')({
-  backgroundColor: 'rgba(59, 130, 246, 1)', 
-  borderRadius: '19px 19px 0 0',
-  width: '74.947px',
-  height: '29.474px',
-  position: 'relative',
-});
-
-const LogoText = styled('svg')({
-  position: 'absolute',
-  fill: 'white',
-  width: '56.854px',
-  height: '23.61px',
-  left: '9.481px',
-  top: '5.359px',
-});
-
-const Description = styled(Typography)(({ isDarkMode }) => ({
-  color: isDarkMode ? '#F9FAFB' : 'rgba(31, 41, 55, 1)', 
-  fontSize: '24px',
-  lineHeight: '32px',
-  textAlign: 'left',
-  padding: '0 0 0 0', 
-  marginBottom: '40px', 
-}));
-
-const Frame = styled(Box)({
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'flex-start',
-  gap: '16px',
-  width: '480px',
-  padding: '0 0 0 0',
-});
-
-const RegisterFrame = styled(Box)({
-  width: '480px',
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '0px',
-});
-
-const RegisterLink = styled(Typography)({
-  color: 'rgba(107, 114, 128, 1)', 
-  fontSize: '14px',
-  lineHeight: '20px',
-  textAlign: 'left',
-});
-
-const RegisterButton = styled(Typography)({
-  color: 'rgba(59, 130, 246, 1)', 
-  fontSize: '14px',
-  fontWeight: '700',
-  lineHeight: '20px',
-  marginTop: '16px', 
-  cursor: 'pointer', 
-});
-const StyledCard = styled(Card)(({ isDarkMode }) => ({
-  maxWidth: 380,
-  borderRadius: 8,
-  padding: 24,
-  backgroundColor: isDarkMode ? '#111827' : '#ffffff',
-  border: isDarkMode ? '1px solid #374151' : 'none',
-  position: 'relative',
-  zIndex: 2,
-  // Подсветка по периметру (только для темной темы)
-  ...(isDarkMode && {
-    '&::before': {
-      content: '""',
-      position: 'absolute',
-      top: -2,
-      left: -2,
-      right: -2,
-      bottom: -2,
-      borderRadius: 10, // Чуть больше, чем у основной карточки
-      background: 'linear-gradient(135deg, #3B82F6, #2563EB)',
-      zIndex: -1,
-      opacity: 0.3
-    }
-  }),
-  // Стандартная тень для светлой темы
-  ...(!isDarkMode && {
-    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
-  })
-}));
-
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { isDarkMode } = useContext(ThemeContext); 
+  const { isDarkMode } = useContext(ThemeContext);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
+  // Стили для фоновых фигур
+  const backgroundShapes = {
+    position: 'fixed',
+    zIndex: -1,
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    overflow: 'hidden',
+    filter: 'blur(100px)',
+    opacity: isDarkMode ? 0.3 : 0.5,
+    '& > div': {
+      position: 'absolute',
+      borderRadius: '50%',
+    },
+    '& > :nth-of-type(1)': {
+      width: '500px',
+      height: '500px',
+      backgroundColor: 'rgba(37, 99, 235, 0.5)',
+      transform: 'rotate(45deg)',
+      left: '-250px',
+      top: '20%',
+    },
+    '& > :nth-of-type(2)': {
+      width: '400px',
+      height: '400px',
+      backgroundColor: 'rgba(37, 99, 235, 0.5)',
+      transform: 'rotate(135deg)',
+      right: '-100px',
+      top: '50%',
+    },
+    '& > :nth-of-type(3)': {
+      width: '600px',
+      height: '600px',
+      backgroundColor: 'rgba(16, 185, 129, 0.5)',
+      transform: 'rotate(-45deg)',
+      left: '30%',
+      top: '-150px',
+    },
+    '& > :nth-of-type(4)': {
+      width: '550px',
+      height: '550px',
+      backgroundColor: 'rgba(245, 158, 11, 0.5)',
+      transform: 'rotate(75deg)',
+      right: '50%',
+      top: '30%',
+    }
+  };
 
   return (
-    <div style={{
+    <Box sx={{
       position: 'fixed',
       top: 0,
       left: 0,
@@ -128,195 +80,279 @@ const LoginPage = () => {
       background: isDarkMode ? '#1F2937' : 'white',
       overflow: 'auto',
       display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center'
+      flexDirection: 'column',
+      p: isMobile ? 2 : 0
     }}>
-      {/* Фоновый SVG */}
-      <div style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        zIndex: 0
-      }}>
-        <svg 
-          width="100%" 
-          height="100%" 
-          viewBox="0 0 1440 800"
-          preserveAspectRatio="xMidYMid slice" 
-        >
-          <g opacity="0.3" filter="url(#filter0_f_45_293)">
-            <path fillRule="evenodd" clipRule="evenodd" d="M-192.588 508.767C-158.672 433.342 -142.697 313.097 -44.5975 331.643C53.4468 350.178 102.766 494.875 182.857 579.743C257.51 658.848 365.085 711.423 401.86 804.726C445.018 914.227 464.516 1051.78 385.039 1092.71C306.222 1133.31 180.657 1005.84 72.7503 974.242C-13.1001 949.105 -101.128 1002.34 -171.107 929.876C-241.157 857.336 -200.279 769.214 -204.464 687.169C-207.758 622.602 -215.634 560.02 -192.588 508.767Z" fill="#2563EB"/>
-            <path fillRule="evenodd" clipRule="evenodd" d="M785.666 787.463C730.104 761.954 641.305 749.448 655.583 677.034C669.853 604.661 777.107 569.04 840.311 510.323C899.222 455.594 938.711 376.372 1007.9 349.727C1089.1 318.456 1190.9 304.839 1220.7 363.83C1250.26 422.331 1155.29 514.418 1131.31 594.006C1112.23 657.326 1151.08 722.71 1097.1 774.023C1043.07 825.387 978.16 794.658 917.483 797.276C869.732 799.337 823.422 804.797 785.666 787.463Z" fill="#2563EB"/>
-            <path fillRule="evenodd" clipRule="evenodd" d="M493.955 150.241C444.613 257.696 269.6 176.712 160.419 222.077C79.9477 255.512 40.4748 403.227 -41.0806 372.546C-125.103 340.937 -86.3359 209.327 -106.209 121.772C-116.986 74.2905 -140.971 30.508 -129.453 -16.8004C-117.673 -65.1848 -84.7817 -103.571 -44.2883 -132.55C1.58379 -165.378 52.5744 -188.757 108.963 -187.423C185.078 -185.621 262.066 -174.149 319.307 -123.945C403.994 -49.6688 540.966 47.861 493.955 150.241Z" fill="#10B981"/>
-            <path fillRule="evenodd" clipRule="evenodd" d="M884.023 227.768C884.231 134.843 848.375 -2.75011 935.361 -35.4384C1026.85 -69.817 1081.3 80.4688 1170.66 120.055C1232.71 147.544 1331.97 94.1454 1363.51 154.238C1395.32 214.842 1297.32 267.764 1283.37 334.772C1267.46 411.128 1329.31 500.188 1279.03 559.808C1222.02 627.402 1114.26 667.41 1033.86 630.595C955.314 594.627 964.502 482.964 934.384 401.993C912.475 343.092 883.883 290.612 884.023 227.768Z" fill="#F59E0B"/>
-          </g>
-          <defs>
-            <filter id="filter0_f_45_293" x="-312.562" y="-287.477" width="1852.56" height="1488.09" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
-              <feFlood floodOpacity="0" result="BackgroundImageFix"/>
-              <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
-              <feGaussianBlur stdDeviation="50" result="effect1_foregroundBlur_45_293"/>
-            </filter>
-          </defs>
-        </svg>
-      </div>
+      {/* Фоновые фигуры */}
+      <Box sx={backgroundShapes}>
+        <Box />
+        <Box />
+        <Box />
+        <Box />
+      </Box>
 
       {/* Основной контент */}
-      <div className="Frame3161" style={{ alignSelf: 'stretch', flex: '1 1 0', justifyContent: 'center', alignItems: 'center', gap: 20, display: 'inline-flex', position: 'relative', zIndex: 1 }}>
-        {/* Левый блок */}
-        <div className="Frame3162" style={{ width: 580, alignSelf: 'stretch', flexDirection: 'column', justifyContent: 'center', alignItems: 'flex-start', gap: 8, display: 'inline-flex' }}>
-          <Container>
-            <LogoContainer>
-              {/* Новый логотип */}
+      <Box sx={{
+        maxWidth: isMobile ? '100%' : '1200px',
+        width: '100%',
+        margin: 'auto',
+        display: 'flex',
+        flexDirection: isMobile ? 'column' : 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: isMobile ? 3 : 6,
+        p: isMobile ? 0 : 4,
+        zIndex: 1
+      }}>
+        {/* Левая часть с описанием */}
+        {isMobile ? (
+          <Box sx={{ width: '100%' }}>
+            <Box sx={{ display: 'flex', mb: 3 }}>
               <img src={cyapLogo} alt="CyaP Logo" style={{ width: 75, height: 40 }} />
-            </LogoContainer>
-            <Frame>
-              <Description isDarkMode={isDarkMode}> 
-                Организуйте свои чаты, держите связь с друзьями и коллегами, делитесь файлами, создавайте групповые обсуждения — всё в одном месте.
-              </Description>
-            </Frame>
-            <RegisterFrame>
-              <RegisterLink>У вас ещё нет аккаунта?</RegisterLink>
-              <Link to="/register" style={{ textDecoration: 'none' }}>
-                <RegisterButton>Зарегистрироваться</RegisterButton>
-              </Link>
-            </RegisterFrame>
-          </Container>
-        </div>
-
-        {/* Правый блок (форма входа) */}
-        <Card sx={{ 
-          maxWidth: 380,
-          borderRadius: 2,
-          p: 3,
-          backgroundColor: isDarkMode ? '#111827' : '#ffffff',
-          border: isDarkMode ? '1px solid #374151' : 'none',
-                              
-        }}>
-          <CardContent>
-            <Typography
-              variant="h6"
-              style={{
-                color: isDarkMode ? '#FFFFFF' : 'rgba(31, 41, 55, 1)',
-                fontFamily: 'Roboto, sans-serif', 
-                fontWeight: 700, 
-                fontSize: '24px', 
-                lineHeight: '32px', 
-                letterSpacing: 'normal', 
-                textAlign: 'left', 
-                padding: 0, 
-                margin: 0,
-                marginBottom: 24, 
+            </Box>
+            <Typography 
+              variant="body1" 
+              sx={{
+                color: isDarkMode ? '#F9FAFB' : 'rgba(31, 41, 55, 1)',
+                fontSize: '16px',
+                lineHeight: '24px',
+                mb: 3
               }}
             >
-              Вход в аккаунт
+              Организуйте свои чаты, держите связь с друзьями и коллегами, 
+              делитесь файлами, создавайте групповые обсуждения — всё в одном месте.
             </Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <Box sx={{ mb: 0.5 }}>
-                <Typography variant="body2" color="#6B7180" sx={{ fontSize: 12 }}>
-                  Email или логин
-                </Typography>
-                <TextField
-                  variant="outlined"
-                  fullWidth
-                  size="small"
-                  placeholder="ivanov@yandex.ru"
-                  sx={{
-                    mt: 1,
-                    backgroundColor: isDarkMode ? '#111827' : 'white',
-                    '& .MuiOutlinedInput-root': {
-                      '& input': {
-                        color: isDarkMode ? '#F9FAFB' : '#111827',
-                        '&::placeholder': { 
-                          color: isDarkMode ? '#FFFFFF' : '#9CA3AF',
-                          opacity: 1, 
-                        },
-                      },
-                      '& fieldset': {
-                        borderColor: isDarkMode ? '#374151' : '#D1D5DB', // Цвет рамки
-                      },
-                      '&:hover fieldset': {
-                        borderColor: isDarkMode ? '#4B5563' : '#9CA3AF', // Цвет рамки при наведении
-                      },
-                    },
-                  }}
-                />
-              </Box>
-              <Box sx={{ mb: -1 }}>
-                <Typography variant="caption" sx={{ color: 'rgba(107, 114, 128, 1)', fontSize: 12 }}>
-                  Пароль
-                </Typography>
-                <TextField
-                  variant="outlined"
-                  fullWidth
-                  size="small"
-                  type="password"
-                  placeholder="******"
-                  sx={{
-                    mt: 1,
-                    backgroundColor:  isDarkMode ? '#111827' : 'white',
-                    '& .MuiOutlinedInput-root': {
-                      '& input': {
-                        color: isDarkMode ? '#F9FAFB' : '#111827', 
-                        '&::placeholder': {
-                          color: isDarkMode ? '#FFFFFF' : '#9CA3AF',
-                          opacity: 1,
-                        },
-                      },
-                      '& fieldset': {
-                        borderColor: isDarkMode ? '#374151' : '#D1D5DB', // Цвет рамки
-                      },
-                      '&:hover fieldset': {
-                        borderColor: isDarkMode ? '#4B5563' : '#9CA3AF', // Цвет рамки при наведении
-                      },
-                    },
-                  }}
-                />
-              </Box>
-              <Typography variant="body2" color="#6B7180" align="right" mt={-1}>
-                Забыли пароль?
+          </Box>
+        ) : (
+          <Box sx={{ width: '50%', maxWidth: '580px' }}>
+            <Box sx={{ display: 'flex', mb: 3 }}>
+              <img src={cyapLogo} alt="CyaP Logo" style={{ width: 75, height: 40 }} />
+            </Box>
+            <Typography 
+              variant="h6" 
+              sx={{
+                color: isDarkMode ? '#F9FAFB' : 'rgba(31, 41, 55, 1)',
+                fontSize: '24px',
+                lineHeight: '32px',
+                mb: 3
+              }}
+            >
+              Организуйте свои чаты, держите связь с друзьями и коллегами, 
+              делитесь файлами, создавайте групповые обсуждения — всё в одном месте.
+            </Typography>
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                color: 'rgba(107, 114, 128, 1)',
+                fontSize: '14px',
+                mb: 1
+              }}
+            >
+              У вас ещё нет аккаунта?
+            </Typography>
+            <Link to="/register" style={{ textDecoration: 'none' }}>
+              <Typography 
+                sx={{ 
+                  color: 'rgba(59, 130, 246, 1)',
+                  fontWeight: 700,
+                  fontSize: '14px',
+                  cursor: 'pointer'
+                }}
+              >
+                Зарегистрироваться
               </Typography>
-              <Box mt={2}>
-                <Button
-                  fullWidth
-                  variant="contained"        
-                  sx={{
-                    backgroundColor: '#3B82F6',
-                    borderRadius: 1.5,
-                    fontFamily: 'Inter, sans-serif',
-                    fontWeight: 700,
-                    fontSize: '16px',
-                    lineHeight: '24px',                                               
-                    color: '#FFFFFF',
-                    textTransform: 'none',
-                    ':hover': {
-                      backgroundColor: '#1769aa',
+            </Link>
+          </Box>
+        )}
+
+        {/* Правая часть с формой */}
+        <Box sx={{
+          width: isMobile ? '100%' : '50%',
+          maxWidth: '380px',
+          backgroundColor: isDarkMode ? '#111827' : 'white',
+          borderRadius: 2,
+          p: 3,
+          border: isDarkMode ? '1px solid #374151' : 'none',
+          position: 'relative',
+          ...(isDarkMode && {
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: -2,
+              left: -2,
+              right: -2,
+              bottom: -2,
+              borderRadius: 10,
+              background: 'linear-gradient(135deg, #3B82F6, #2563EB)',
+              zIndex: -1,
+              opacity: 0.3
+            }
+          }),
+          boxShadow: !isDarkMode ? '0 4px 6px rgba(0, 0, 0, 0.1)' : 'none'
+        }}>
+          <Typography
+            variant="h6"
+            sx={{
+              color: isDarkMode ? '#FFFFFF' : 'rgba(31, 41, 55, 1)',
+              fontWeight: 700,
+              fontSize: '24px',
+              mb: 3
+            }}
+          >
+            Вход в аккаунт
+          </Typography>
+
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="body2" sx={{ color: '#6B7180', fontSize: 12 }}>
+              Email или логин
+            </Typography>
+            <TextField
+              fullWidth
+              variant="outlined"
+              size="small"
+              placeholder="ivanov@yandex.ru"
+              sx={{
+                mt: 1,
+                backgroundColor: isDarkMode ? '#111827' : 'white',
+                '& .MuiOutlinedInput-root': {
+                  '& input': {
+                    color: isDarkMode ? '#F9FAFB' : '#111827',
+                    '&::placeholder': { 
+                      color: isDarkMode ? '#FFFFFF' : '#9CA3AF',
+                      opacity: 1, 
                     },
-                  }}
-                  onClick={() => navigate('/profile')}
-                >
-                  Войти
-                </Button>
-              </Box>
-              <Box mt={2}>
-                <Typography variant="body2" color="#6B7180" align="center">
-                  Войти с помощью
-                </Typography>
-                <Box display="flex" justifyContent="center" mt={1}>              
-                  <IconButton aria-label="vk" sx={{ color: 'rgba(0, 119, 255, 1)' }}>
-                    <img src={VkIcon} alt="VK" style={{ width: 42.88, height: 32 }} />
-                  </IconButton>
-                  <IconButton aria-label="gmail" sx={{ color: 'rgba(220, 78, 65, 1)' }}>
-                    <img src={GIcon} alt="gmail" style={{ width: 42.88, height: 32 }} />
-                  </IconButton>
-                </Box>
-              </Box>
-            </Box>  
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+                  },
+                  '& fieldset': {
+                    borderColor: isDarkMode ? '#374151' : '#D1D5DB',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: isDarkMode ? '#4B5563' : '#9CA3AF',
+                  },
+                },
+              }}
+            />
+          </Box>
+
+          <Box sx={{ mb: 1 }}>
+            <Typography variant="body2" sx={{ color: '#6B7180', fontSize: 12 }}>
+              Пароль
+            </Typography>
+            <TextField
+              fullWidth
+              variant="outlined"
+              size="small"
+              type="password"
+              placeholder="******"
+              sx={{
+                mt: 1,
+                backgroundColor: isDarkMode ? '#111827' : 'white',
+                '& .MuiOutlinedInput-root': {
+                  '& input': {
+                    color: isDarkMode ? '#F9FAFB' : '#111827',
+                    '&::placeholder': {
+                      color: isDarkMode ? '#FFFFFF' : '#9CA3AF',
+                      opacity: 1,
+                    },
+                  },
+                  '& fieldset': {
+                    borderColor: isDarkMode ? '#374151' : '#D1D5DB',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: isDarkMode ? '#4B5563' : '#9CA3AF',
+                  },
+                },
+              }}
+            />
+          </Box>
+
+          <Typography 
+            variant="body2" 
+            align="right" 
+            sx={{ 
+              color: '#6B7180',
+              fontSize: 12,
+              mb: 2
+            }}
+          >
+            Забыли пароль?
+          </Typography>
+
+          <Button
+            fullWidth
+            variant="contained"
+            sx={{
+              backgroundColor: '#3B82F6',
+              borderRadius: 1.5,
+              fontWeight: 700,
+              fontSize: '16px',
+              color: '#FFFFFF',
+              textTransform: 'none',
+              py: 1,
+              ':hover': {
+                backgroundColor: '#1769aa',
+              },
+            }}
+            onClick={() => navigate('/profile')}
+          >
+            Войти
+          </Button>
+
+          <Typography 
+            variant="body2" 
+            align="center" 
+            sx={{ 
+              color: '#6B7180',
+              my: 2
+            }}
+          >
+            Войти с помощью
+          </Typography>
+
+          <Grid container justifyContent="center" spacing={2}>
+            <Grid item>
+              <IconButton aria-label="vk" sx={{ color: 'rgba(0, 119, 255, 1)' }}>
+                <img src={VkIcon} alt="VK" style={{ width: 32, height: 32 }} />
+              </IconButton>
+            </Grid>
+            <Grid item>
+              <IconButton aria-label="gmail" sx={{ color: 'rgba(220, 78, 65, 1)' }}>
+                <img src={GIcon} alt="gmail" style={{ width: 32, height: 32 }} />
+              </IconButton>
+            </Grid>
+          </Grid>
+        </Box>
+
+        {/* Ссылка на регистрацию (только для мобильных) */}
+        {isMobile && (
+          <Box sx={{ 
+            textAlign: 'center',
+            width: '100%'
+          }}>
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                color: '#6B7180',
+                display: 'inline'
+              }}
+            >
+              У вас ещё нет аккаунта?{' '}
+            </Typography>
+            <Link to="/register" style={{ textDecoration: 'none' }}>
+              <Typography 
+                component="span" 
+                sx={{ 
+                  color: '#3B82F6',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                Зарегистрироваться
+              </Typography>
+            </Link>
+          </Box>
+        )}
+      </Box>
+    </Box>
   );
 };
 

@@ -24,7 +24,6 @@ const Header = styled(Box)({
   justifyContent: 'flex-start',
   width: '780px',
   padding: '16px 0',  
-  
 });
 
 const PageContent = styled(Paper)(({ isDarkMode }) => ({
@@ -44,7 +43,6 @@ const InputContainer = styled(Box)({
   marginBottom: '24px',
 });
 
-
 const СreatingСhat = () => {
   const { isDarkMode } = useContext(ThemeContext);
   const navigate = useNavigate();
@@ -54,13 +52,22 @@ const СreatingСhat = () => {
   };
   
   const handleCreateChat = () => {
-    // возможно логика создания чата??
-    // Затем переход на страницу чата
     navigate('/chat-page'); 
   };
 
   return (
   <>
+    <Box
+      sx={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: isDarkMode ? '#111827' : 'white',
+        zIndex: -1
+      }}
+    />
     <Background isDarkMode={isDarkMode}/>
     <Container 
       maxWidth="lg" 
@@ -73,7 +80,6 @@ const СreatingСhat = () => {
         minHeight: '100vh',
         padding: '24px',
         zIndex: 1,
-               
       }}>
       <Header>
       <Box sx={{ 
