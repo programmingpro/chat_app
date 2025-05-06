@@ -18,8 +18,7 @@ import Background from '../components/Background/Background';
 const UserSettings = () => {
   const navigate = useNavigate();
   const { isDarkMode, toggleDarkMode } = useContext(ThemeContext);
-
-  // Обработчик для перехода на страницу профиля
+  
   const handleGoBack = () => {
     navigate('/profile'); 
   };
@@ -34,13 +33,13 @@ const UserSettings = () => {
   return (
     <Box
       sx={{
-        width: '100vw', // Растягиваем на всю ширину экрана
-        height: '100vh', // Растягиваем на всю высоту экрана
+        width: '100vw', 
+        height: '100vh', 
         backgroundColor: isDarkMode ? '#1F2937' : '#f9fafb',
         p: 4,
         boxSizing: 'border-box',
         position: 'relative',
-        overflow: 'hidden', // Убираем скролл, если контент выходит за пределы экрана
+        overflow: 'hidden', 
       }}
     >
       {/* Добавляем Background */}

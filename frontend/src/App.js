@@ -8,6 +8,8 @@ import UserSettings from './pages/UserSettings'
 import './App.css';
 import { ThemeProvider } from './pages/ThemeContext';
 import ChatList from './pages/ChatList';
+import СreatingСhat from './pages/СreatingСhat';
+import ChatPage from './pages/ChatPage';
 
 
 const App = () => {
@@ -30,7 +32,14 @@ const App = () => {
         {/* Страница настроек пользователя*/}
         <Route path="/settings" element={<UserSettings />} />
 
+        {/* Страница со списком чатов*/}
         <Route path="/chat-list" element={<ChatList />} />
+
+        {/* Страница создание чата*/}
+        <Route path="/create-chat" element={<СreatingСhat />} />
+      
+        {/* Страница чата*/}
+        <Route path="/chat-page" element={<ChatPage />} />
       </Routes>
     </Router>
     </ThemeProvider>
