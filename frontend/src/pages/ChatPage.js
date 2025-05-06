@@ -68,6 +68,17 @@ const ChatPage = () => {
 
   return (
     <>
+      <Box
+        sx={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: isDarkMode ? '#111827' : 'white',
+          zIndex: -1
+        }}
+      />
       <Background isDarkMode={isDarkMode}/>
       <Container 
         maxWidth="lg" 
@@ -85,7 +96,7 @@ const ChatPage = () => {
         <Box sx={{ 
           display: 'flex', 
           alignItems: 'center',
-          transform: 'translateX(-30px)', // Точное смещение
+          transform: 'translateX(-30px)', 
           border: '1px solid transparent' 
         }}>
             <IconButton 
@@ -129,10 +140,10 @@ const ChatPage = () => {
             p: '12px 24px',
             borderBottom: isDarkMode ? '1px solid #374651' : '1px solid #E5E7EB',
             bgcolor: isDarkMode ? '#0F1827' : '#FFFFFF',
-            marginLeft: '-50px', // Смещение влево
-            marginRight: '-24px', // Компенсация
-            width: 'calc(100% + 18px)', // Ширина с учетом смещения
-            marginBottom: '16px', // Отступ снизу
+            marginLeft: '-50px', 
+            marginRight: '-24px', 
+            width: 'calc(100% + 18px)', 
+            marginBottom: '16px', 
             paddingLeft: '48px'
           }}>
             <Avatar 

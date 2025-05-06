@@ -11,7 +11,6 @@ import ChatList from './pages/ChatList';
 import СreatingСhat from './pages/СreatingСhat';
 import ChatPage from './pages/ChatPage';
 
-
 const App = () => {
   return (
     <ThemeProvider>
@@ -39,7 +38,7 @@ const App = () => {
         <Route path="/create-chat" element={<СreatingСhat />} />
       
         {/* Страница чата*/}
-        <Route path="/chat-page" element={<ChatPage />} />
+        <Route path="/chat-page" element={<ChatPage />} />        
       </Routes>
     </Router>
     </ThemeProvider>

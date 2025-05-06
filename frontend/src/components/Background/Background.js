@@ -5,21 +5,22 @@ const Background = () => {
     <div
       className="Frame3338"
       style={{
-        position: 'absolute', // Абсолютное позиционирование
-        top: 0, 
-        left: 0, 
-        width: '100vw', // Растягиваем на всю ширину экрана
-        height: '100vh', // Растягиваем на всю высоту экрана
-        zIndex: 0, 
-        overflow: 'hidden', 
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        zIndex: 0,
+        overflow: 'hidden',
       }}
     >
       <svg
-        width="100%" // Растягиваем SVG на всю ширину контейнера
-        height="100%" // Растягиваем SVG на всю высоту контейнера
-        viewBox="0 0 1440 896" // Сохраняем пропорции SVG
+        width="100%"
+        height="100%"
+        viewBox="0 0 1440 896"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
+        preserveAspectRatio="xMidYMid slice"
       >
         <g opacity="0.3" filter="url(#filter0_f_9_241)">
           <path
