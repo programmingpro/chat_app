@@ -1,7 +1,7 @@
 import { Entity, Column, CreateDateColumn, UpdateDateColumn, PrimaryGeneratedColumn, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { Chat } from './chat.entity';
 import { User } from '../../users/entities/user.entity';
-import { Role } from '../../../../common/Enum/Role';
+import { Role } from '../../common/Enum/Role';
 
 @Entity('chat_participants')
 @Index(['chatId', 'userId'], { unique: true }) // Пользователь может быть только один раз в чате

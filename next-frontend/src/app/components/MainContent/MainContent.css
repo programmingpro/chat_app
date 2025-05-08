@@ -1,0 +1,47 @@
+/* MainContent.css */
+
+/* Стили для контейнера кнопок */
+.Frame3356 {
+  height: 40px;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 20px;
+  display: inline-flex;
+}
+
+/* Стили для кнопок */
+.Buttons {
+  width: 280px;
+  padding: 8px 16px;
+  background: #3B82F6;
+  border-radius: 8px;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 2px;
+  display: inline-flex;
+  cursor: pointer;
+}
+
+/* Стили для текста внутри кнопок */
+.Button {
+  color: #F9FAFB;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 24px;
+  word-wrap: break-word;
+}
+
+/* Стили для hover-эффекта */
+.Buttons:hover {
+  background: #1769aa;
+}
+
+Frame3356.dark {
+  background-color: #1F2937;
+}
+
+.Buttons.dark {
+  background-color: #3B82F6;
+  color: #FFFFFF;
+}
