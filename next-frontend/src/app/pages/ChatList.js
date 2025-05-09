@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { 
   Box, 
   Typography, 
@@ -12,13 +12,18 @@ import {
   ListItemText,
   Divider,
   Badge,
-  styled
+  styled,
+  Container,
+  CircularProgress
 } from '@mui/material';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import SearchIcon from '@mui/icons-material/Search';
 import { ThemeContext } from './ThemeContext';
 import Background from '../components/Background/Background';
 import { useRouter } from 'next/navigation';
+import { authService } from '../services/api';
+import Image from 'next/image';
+import { Add as AddIcon } from '@mui/icons-material';
 
 const SvgIcon = styled('svg')({
   fill: 'none',
@@ -28,8 +33,8 @@ const SvgIcon = styled('svg')({
   strokeLinejoin: 'round',
 });
 
-const NotificationBox = styled(Box)(({ isDarkMode }) => ({
-  backgroundColor: isDarkMode ? '#1F2937' : '#FFFFFF',
+const NotificationBox = styled(Box)(({ theme, isdarkmode }) => ({
+  backgroundColor: isdarkmode === 'true' ? '#1F2937' : '#FFFFFF',
   borderRadius: 12,
   boxShadow: '0px 8px 16px rgba(0, 0, 0, 0.1)',
   width: 400,
@@ -109,7 +114,7 @@ const NotificationList = ({ isDarkMode }) => {
   ];  
 
   return (
-    <NotificationBox isDarkMode={isDarkMode}>
+    <NotificationBox isdarkmode={isDarkMode.toString()}>
       {notifications.map((notification, index) => (
         <React.Fragment key={notification.id}>
           <Notification 
@@ -129,11 +134,73 @@ const NotificationList = ({ isDarkMode }) => {
   );
 };
 
+const BACKEND_URL = 'http://localhost:3000';
+
 const ChatList = () => {
   const { isDarkMode } = useContext(ThemeContext);
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(3);
+  const [userData, setUserData] = useState(null);
   const router = useRouter();
+  const [chats, setChats] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await authService.getProfile();
+        console.log('User profile data:', response);
+        setUserData(response);
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
+  useEffect(() => {
+    const fetchChats = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const token = localStorage.getItem('token');
+        if (!token) {
+          throw new Error('No authentication token found');
+        }
+
+        const url = searchQuery 
+          ? `${BACKEND_URL}/chats/search?query=${encodeURIComponent(searchQuery)}`
+          : `${BACKEND_URL}/chats`;
+
+        const response = await fetch(url, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch chats');
+        }
+
+        const data = await response.json();
+        setChats(data);
+      } catch (error) {
+        console.error('Error fetching chats:', error);
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const debounceTimer = setTimeout(() => {
+      fetchChats();
+    }, 300); // Добавляем задержку 300мс для предотвращения частых запросов
+
+    return () => clearTimeout(debounceTimer);
+  }, [searchQuery]); // Добавляем searchQuery в зависимости
 
   const toggleNotifications = () => {
     setShowNotifications(!showNotifications);
@@ -150,16 +217,42 @@ const ChatList = () => {
     router.push('/profile'); // Переход на страницу профиля
   };
 
-  const chats = [
-    {
-      id: 1,
-      name: 'Алексей Петров',
-      lastMessage: 'Привет, как дела? Документы уже готовы к отправке...',
-      time: '12:30',
-      unread: 2,
-      avatar: 'AP'
-    },    
-  ];
+  const handleChatClick = (chatId) => {
+    router.push(`/chat/${chatId}`);
+  };
+
+  const handleSearchChange = (event) => {
+    setSearchQuery(event.target.value);
+  };
+
+  if (loading) {
+    return (
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        backgroundColor: isDarkMode ? '#111827' : '#ffffff'
+      }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        backgroundColor: isDarkMode ? '#111827' : '#ffffff',
+        color: isDarkMode ? '#E5E7EB' : '#000000'
+      }}>
+        <Typography>Error: {error}</Typography>
+      </Box>
+    );
+  }
 
   return (
     <>
@@ -172,7 +265,7 @@ const ChatList = () => {
           right: 0,
           bottom: 0,
           background: isDarkMode ? '#111827' : 'white',
-          overflow: 'auto',
+          overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column'
         }}
@@ -192,7 +285,8 @@ const ChatList = () => {
               px: '30px'
             },
             position: 'relative',
-            zIndex: 1
+            zIndex: 1,
+            overflow: 'hidden'
           }}
         >
           {/* Навигационная панель */}
@@ -206,7 +300,8 @@ const ChatList = () => {
               gap: 2,
               position: 'sticky',
               top: 0,
-              zIndex: 1
+              zIndex: 1,
+              flexShrink: 0
             }}
           >
             {/* Заголовок и иконки */}
@@ -268,14 +363,36 @@ const ChatList = () => {
                 )}
 
                 <IconButton onClick={handleProfileClick}>
-                  <Avatar
-                    sx={{
+                  {userData?.avatarUrl ? (
+                    <Box sx={{
                       width: 40,
                       height: 40,
-                      bgcolor: isDarkMode ? '#3B82F6' : '#2563EB',
-                      color: '#FFFFFF'
-                    }}
-                  />
+                      position: 'relative',
+                      borderRadius: '50%',
+                      overflow: 'hidden'
+                    }}>
+                      <Image
+                        src={`http://localhost:3000${userData.avatarUrl}`}
+                        alt={`${userData.firstName} ${userData.lastName}`}
+                        fill
+                        style={{
+                          objectFit: 'cover',
+                        }}
+                        unoptimized
+                      />
+                    </Box>
+                  ) : (
+                    <Avatar
+                      sx={{
+                        width: 40,
+                        height: 40,
+                        bgcolor: isDarkMode ? '#3B82F6' : '#2563EB',
+                        color: '#FFFFFF'
+                      }}
+                    >
+                      {userData?.firstName?.[0]}{userData?.lastName?.[0]}
+                    </Avatar>
+                  )}
                 </IconButton>
               </Box>
             </Box>
@@ -285,6 +402,8 @@ const ChatList = () => {
               fullWidth
               variant="outlined"
               placeholder="Поиск по сообщениям или чатам"
+              value={searchQuery}
+              onChange={handleSearchChange}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -321,135 +440,189 @@ const ChatList = () => {
           <Box
             sx={{
               flex: 1,
-              overflowY: 'auto',
-              py: 2,
+              pt: 2,
               display: 'flex',
               flexDirection: 'column',
-              position: 'relative'
+              position: 'relative',
+              height: 'calc(100vh - 200px)'
             }}
           >
             {/* Список чатов */}
-            {chats.map((chat, index) => (
-              <React.Fragment key={chat.id}>
-                <ListItem
+            <Box sx={{
+              backgroundColor: isDarkMode ? '#1F2937' : '#F3F4F6',
+              borderRadius: '12px',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+              position: 'relative',
+              maxHeight: '100%'
+            }}>
+              {loading ? (
+                <Box sx={{ 
+                  display: 'flex', 
+                  justifyContent: 'center', 
+                  alignItems: 'center',
+                  padding: '24px'
+                }}>
+                  <CircularProgress />
+                </Box>
+              ) : error ? (
+                <Box sx={{ 
+                  display: 'flex', 
+                  justifyContent: 'center', 
+                  alignItems: 'center',
+                  padding: '24px',
+                  color: isDarkMode ? '#F9FAFB' : '#111827'
+                }}>
+                  <Typography color="error">{error}</Typography>
+                </Box>
+              ) : chats.length === 0 ? (
+                <Box sx={{ 
+                  display: 'flex', 
+                  justifyContent: 'center', 
+                  alignItems: 'center',
+                  padding: '24px',
+                  color: isDarkMode ? '#9CA3AF' : '#6B7280'
+                }}>
+                  <Typography>
+                    {searchQuery ? 'Чаты не найдены' : 'У вас пока нет чатов'}
+                  </Typography>
+                </Box>
+              ) : (
+                <Box sx={{
+                  overflowY: 'auto',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  '&::-webkit-scrollbar': {
+                    width: '8px',
+                    display: 'block'
+                  },
+                  '&::-webkit-scrollbar-track': {
+                    background: 'transparent',
+                    margin: '4px 0'
+                  },
+                  '&::-webkit-scrollbar-thumb': {
+                    background: isDarkMode ? '#374151' : '#D1D5DB',
+                    borderRadius: '4px',
+                    border: '2px solid transparent',
+                    backgroundClip: 'padding-box'
+                  },
+                  '&::-webkit-scrollbar-thumb:hover': {
+                    background: isDarkMode ? '#4B5563' : '#9CA3AF',
+                    border: '2px solid transparent',
+                    backgroundClip: 'padding-box'
+                  }
+                }}>
+                  {chats.map((chat, index) => (
+                    <Box
+                      key={chat.id}
+                      onClick={() => router.push(`/chat/${chat.id}`)}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        padding: '16px',
+                        cursor: 'pointer',
+                        transition: 'background-color 0.2s',
+                        '&:hover': {
+                          backgroundColor: isDarkMode ? '#374151' : '#E5E7EB',
+                        },
+                        borderBottom: index < chats.length - 1 ? 
+                          `1px solid ${isDarkMode ? '#374151' : '#E5E7EB'}` : 'none'
+                      }}
+                    >
+                      {chat.avatarUrl ? (
+                        <Box sx={{
+                          width: 40,
+                          height: 40,
+                          position: 'relative',
+                          borderRadius: '50%',
+                          overflow: 'hidden',
+                          mr: 2
+                        }}>
+                          <Image
+                            src={`${BACKEND_URL}${chat.avatarUrl}`}
+                            alt={chat.name}
+                            fill
+                            style={{
+                              objectFit: 'cover',
+                            }}
+                            unoptimized
+                          />
+                        </Box>
+                      ) : (
+                        <Avatar 
+                          sx={{ 
+                            width: 40, 
+                            height: 40, 
+                            mr: 2,
+                            bgcolor: isDarkMode ? '#3B82F6' : '#2563EB',
+                            color: '#FFFFFF'
+                          }}
+                        >
+                          {chat.name?.[0]}
+                        </Avatar>
+                      )}
+                      <Box sx={{ flexGrow: 1 }}>
+                        <Typography sx={{
+                          width: '216px',
+                          height: '24px',
+                          fontFamily: 'Inter',
+                          fontStyle: 'normal',
+                          fontWeight: 700,
+                          fontSize: '16px',
+                          lineHeight: '24px',
+                          color: isDarkMode ? '#E5E7EB' : '#1F2937',
+                          flex: 'none',
+                          order: 0,
+                          flexGrow: 1,
+                          marginBottom: '4px'
+                        }}>
+                          {chat.name}
+                        </Typography>
+                        <Typography sx={{
+                          fontSize: 14,
+                          color: isDarkMode ? '#9CA3AF' : '#6B7280',
+                          lineHeight: '20px'
+                        }}>
+                          {chat.type === 'group' ? 'Групповой чат' : 'Личный чат'}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  ))}
+                </Box>
+              )}
+
+              {/* Кнопка нового чата */}
+              <Box
+                sx={{
+                  position: 'absolute',
+                  bottom: 16,
+                  right: 16,
+                  zIndex: 2
+                }}
+              >
+                <IconButton
+                  onClick={handleNewChatClick}
                   sx={{
-                    bgcolor: isDarkMode ? '#111827' : 'white',
-                    borderRadius: 2,
-                    px: 2,
-                    py: 1.5,
-                    mb: 1,
+                    backgroundColor: 'rgba(59, 130, 246, 1)',
+                    borderRadius: '50%',
+                    width: 56,
+                    height: 56,
                     '&:hover': {
-                      bgcolor: isDarkMode ? '#1F2937' : '#F9FAFB'
+                      backgroundColor: 'rgba(37, 99, 235, 1)'
                     }
                   }}
                 >
-                  <ListItemAvatar>
-                    <Avatar 
-                      sx={{ 
-                        bgcolor: isDarkMode ? '#3B82F6' : '#2563EB',
-                        color: 'white'
-                      }}
-                    >
-                      {chat.avatar}
-                    </Avatar>
-                  </ListItemAvatar>
-                  <ListItemText
-                    primary={
-                      <Box display="flex" justifyContent="space-between">
-                        <Typography
-                          component="span"
-                          variant="body1"
-                          color={isDarkMode ? '#F9FAFB' : '#1F2938'}
-                          fontWeight="500"
-                        >
-                          {chat.name}
-                        </Typography>
-                        <Typography
-                          component="span"
-                          variant="body2"
-                          sx={{
-                            color: isDarkMode ? '#9CA3AF' : '#6B7280',
-                            fontSize: '14px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 1
-                          }}
-                        >
-                          {chat.time}
-                        </Typography>
-                      </Box>
-                    }
-                    secondary={
-                      <Typography
-                        component="span"
-                        variant="body2"
-                        sx={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          color: isDarkMode ? '#9CA3AF' : '#6B7280',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          maxWidth: '70%',
-                        }}
-                      >
-                        {chat.lastMessage}
-                        {chat.unread > 0 && (
-                          <Badge 
-                            badgeContent={chat.unread} 
-                            color="primary"
-                            sx={{
-                              '& .MuiBadge-badge': {
-                                right: -4,
-                                top: 4,
-                                backgroundColor: isDarkMode ? '#3B82F6' : '#2563EB',
-                                color: '#FFFFFF'
-                              }
-                            }}
-                          />
-                        )}
-                      </Typography>
-                    }
-                    sx={{ my: 0 }}
-                  />
-                </ListItem>
-                <Divider sx={{ borderColor: isDarkMode ? '#374151' : '#E5E7EB' }} />
-              </React.Fragment>
-            ))}
-
-            {/* Кнопка нового чата */}
-            <Box
-              sx={{
-                position: 'sticky',
-                bottom: 16,
-                right: 16,
-                alignSelf: 'flex-end',
-                marginTop: 'auto',
-                zIndex: 2
-              }}
-            >
-              <IconButton
-                onClick={handleNewChatClick}
-                sx={{
-                  backgroundColor: 'rgba(59, 130, 246, 1)',
-                  borderRadius: '50%',
-                  width: 56,
-                  height: 56,
-                  '&:hover': {
-                    backgroundColor: 'rgba(37, 99, 235, 1)'
-                  }
-                }}
-              >
-                <SvgIcon
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  width="24"
-                  height="24"
-                >
-                  <path d="M18 2.75L20.06 0.68C20.49 0.24 21.08 0 21.69 0C22.3 0 22.89 0.24 23.32 0.68C23.76 1.11 24 1.7 24 2.31C24 2.92 23.76 3.51 23.32 3.94L5.64 21.62C4.99 22.27 4.19 22.75 3.3 23.02L0 24L0.98 20.7C1.25 19.81 1.73 19.01 2.38 18.36L18 2.75Z" />
-                </SvgIcon>
-              </IconButton>
+                  <SvgIcon
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    width="24"
+                    height="24"
+                  >
+                    <path d="M18 2.75L20.06 0.68C20.49 0.24 21.08 0 21.69 0C22.3 0 22.89 0.24 23.32 0.68C23.76 1.11 24 1.7 24 2.31C24 2.92 23.76 3.51 23.32 3.94L5.64 21.62C4.99 22.27 4.19 22.75 3.3 23.02L0 24L0.98 20.7C1.25 19.81 1.73 19.01 2.38 18.36L18 2.75Z" />
+                  </SvgIcon>
+                </IconButton>
+              </Box>
             </Box>
           </Box>
         </Box>

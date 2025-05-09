@@ -1,10 +1,11 @@
-import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Like } from 'typeorm';
 import { User } from './entities/user.entity';
 import { UpdateProfileRequest } from '../common/DTO/UpdateProfileRequest';
 import { UpdatePasswordRequest } from '../common/DTO/UpdatePasswordRequest';
 import * as bcrypt from 'bcrypt';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -20,7 +21,7 @@ export class UsersService {
   async findById(id: string): Promise<User> {
     const user = await this.usersRepository.findOne({ where: { id } });
     if (!user) {
-      throw new NotFoundException(`User with ID ${id} not found`);
+      throw new NotFoundException('User not found');
     }
     return user;
   }
@@ -41,63 +42,138 @@ export class UsersService {
     return this.usersRepository.save(user);
   }
 
-  async updateProfile(userId: string, updateData: UpdateProfileRequest): Promise<User> {
-    const user = await this.findById(userId);
-    
-    // Обновляем базовую информацию
-    if (updateData.firstName !== undefined) {
-      user.firstName = updateData.firstName;
-    }
-    if (updateData.lastName !== undefined) {
-      user.lastName = updateData.lastName;
-    }
-    if (updateData.email !== undefined) {
-      // Проверяем, не занят ли email другим пользователем
-      const existingUser = await this.findByEmail(updateData.email);
-      if (existingUser && existingUser.id !== userId) {
-        throw new UnauthorizedException('Email is already taken');
-      }
-      user.email = updateData.email;
-    }
-    if (updateData.username !== undefined) {
-      user.username = updateData.username;
-    }
-    
-    // Обновляем настройки
-    if (updateData.twoFactorAuth !== undefined) {
-      user.twoFactorAuth = updateData.twoFactorAuth;
-    }
-    if (updateData.pushNotifications !== undefined) {
-      user.pushNotifications = updateData.pushNotifications;
-    }
-    if (updateData.notificationSound !== undefined) {
-      user.notificationSound = updateData.notificationSound;
-    }
-    if (updateData.darkTheme !== undefined) {
-      user.darkTheme = updateData.darkTheme;
-    }
+  async updateProfile(userId: string, updateProfileRequest: UpdateProfileRequest): Promise<User> {
+    try {
+      console.log('Updating profile for user:', userId);
+      console.log('Update data:', updateProfileRequest);
 
-    return this.usersRepository.save(user);
+      const user = await this.findById(userId);
+      if (!user) {
+        throw new NotFoundException(`User with ID ${userId} not found`);
+      }
+      
+      // Обновляем только те поля, которые пришли в запросе
+      if (updateProfileRequest.firstName !== undefined) {
+        user.firstName = updateProfileRequest.firstName;
+      }
+      if (updateProfileRequest.lastName !== undefined) {
+        user.lastName = updateProfileRequest.lastName;
+      }
+      if (updateProfileRequest.email !== undefined) {
+        user.email = updateProfileRequest.email;
+      }
+      if (updateProfileRequest.username !== undefined) {
+        user.username = updateProfileRequest.username;
+      }
+      if (updateProfileRequest.avatarUrl !== undefined) {
+        user.avatarUrl = updateProfileRequest.avatarUrl;
+      }
+      if (updateProfileRequest.twoFactorAuth !== undefined) {
+        user.twoFactorAuth = updateProfileRequest.twoFactorAuth;
+      }
+      if (updateProfileRequest.pushNotifications !== undefined) {
+        user.pushNotifications = updateProfileRequest.pushNotifications;
+      }
+      if (updateProfileRequest.notificationSound !== undefined) {
+        user.notificationSound = updateProfileRequest.notificationSound;
+      }
+      if (updateProfileRequest.darkTheme !== undefined) {
+        user.darkTheme = updateProfileRequest.darkTheme;
+      }
+
+      console.log('Saving updated user:', user);
+      // Сохраняем обновленного пользователя
+      const updatedUser = await this.usersRepository.save(user);
+      console.log('User saved successfully');
+      
+      // Возвращаем обновленного пользователя без пароля
+      const { password, ...result } = updatedUser;
+      return result as User;
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      throw error;
+    }
   }
 
   async updatePassword(id: string, passwordData: UpdatePasswordRequest): Promise<void> {
-    const user = await this.usersRepository.findOne({
-      where: { id },
-      select: ['id', 'password'],
+    try {
+      console.log('Updating password for user:', id);
+      console.log('Password data:', { 
+        currentPasswordLength: passwordData.currentPassword?.length,
+        newPasswordLength: passwordData.newPassword?.length 
+      });
+
+      const user = await this.usersRepository.findOne({
+        where: { id },
+        select: ['id', 'password'],
+      });
+
+      console.log('User found:', !!user);
+
+      if (!user) {
+        throw new NotFoundException(`User with ID ${id} not found`);
+      }
+
+      // Проверяем текущий пароль
+      console.log('Comparing current password...');
+      const isPasswordValid = await bcrypt.compare(passwordData.currentPassword, user.password);
+      console.log('Current password valid:', isPasswordValid);
+
+      if (!isPasswordValid) {
+        throw new UnauthorizedException('Current password is incorrect');
+      }
+
+      // Проверяем, что новый пароль отличается от текущего
+      console.log('Checking if new password is different...');
+      const isSamePassword = await bcrypt.compare(passwordData.newPassword, user.password);
+      console.log('New password is same as current:', isSamePassword);
+
+      if (isSamePassword) {
+        throw new BadRequestException('New password must be different from the current password');
+      }
+
+      // Хешируем и сохраняем новый пароль
+      console.log('Hashing new password...');
+      const hashedPassword = await bcrypt.hash(passwordData.newPassword, 10);
+      user.password = hashedPassword;
+      
+      console.log('Saving updated user...');
+      await this.usersRepository.save(user);
+      console.log('Password updated successfully');
+    } catch (error) {
+      console.error('Error updating password:', error);
+      if (error instanceof NotFoundException || 
+          error instanceof UnauthorizedException || 
+          error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new BadRequestException('Failed to update password');
+    }
+  }
+
+  async searchUsers(query: string): Promise<User[]> {
+    if (!query) {
+      return this.usersRepository.find();
+    }
+
+    return this.usersRepository.find({
+      where: [
+        { firstName: Like(`%${query}%`) },
+        { lastName: Like(`%${query}%`) },
+        { username: Like(`%${query}%`) },
+        { email: Like(`%${query}%`) }
+      ]
     });
+  }
 
-    if (!user) {
-      throw new NotFoundException(`User with ID ${id} not found`);
-    }
+  async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
+    const user = await this.findById(id);
+    Object.assign(user, updateUserDto);
+    return this.usersRepository.save(user);
+  }
 
-    // Проверяем текущий пароль
-    const isPasswordValid = await bcrypt.compare(passwordData.currentPassword, user.password);
-    if (!isPasswordValid) {
-      throw new UnauthorizedException('Current password is incorrect');
-    }
-
-    // Хешируем и сохраняем новый пароль
-    user.password = await bcrypt.hash(passwordData.newPassword, 10);
-    await this.usersRepository.save(user);
+  async remove(id: string): Promise<void> {
+    const user = await this.findById(id);
+    await this.usersRepository.remove(user);
   }
 } 

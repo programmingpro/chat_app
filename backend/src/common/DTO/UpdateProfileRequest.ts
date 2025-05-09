@@ -35,6 +35,14 @@ export class UpdateProfileRequest {
     username?: string;
 
     @ApiProperty({
+        description: 'URL аватара пользователя',
+        required: false
+    })
+    @IsString()
+    @IsOptional()
+    avatarUrl?: string;
+
+    @ApiProperty({
         description: 'Enable/disable two-factor authentication',
         example: false,
         required: false
@@ -69,12 +77,4 @@ export class UpdateProfileRequest {
     @IsBoolean()
     @IsOptional()
     darkTheme?: boolean;
-
-    @ApiProperty({
-        description: 'URL аватара пользователя',
-        required: false
-    })
-    @IsString()
-    @IsOptional()
-    avatarUrl?: string;
 }

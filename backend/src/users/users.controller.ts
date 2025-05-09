@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, UseGuards, UnauthorizedException, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, UseGuards, UnauthorizedException, UseInterceptors, UploadedFile, BadRequestException, Query, Request, Put, Delete } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { User } from './entities/user.entity';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
@@ -12,6 +12,7 @@ import * as path from 'path';
 import { Express } from 'express';
 import { extname } from 'path';
 import { v4 as uuidv4 } from 'uuid';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @ApiTags('Users')
 @Controller('users')
@@ -19,6 +20,18 @@ import { v4 as uuidv4 } from 'uuid';
 @ApiBearerAuth()
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
+
+  @Get('search')
+  @ApiOperation({ summary: 'Search users' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Returns filtered users',
+    type: [User]
+  })
+  async searchUsers(@Request() req) {
+    const query = req.query.query || '';
+    return this.usersService.searchUsers(query);
+  }
 
   @Get()
   @ApiOperation({ summary: 'Get all users' })
@@ -80,7 +93,17 @@ export class UsersController {
     @UserDecorator() currentUser: any,
     @Body() updateProfileRequest: UpdateProfileRequest
   ): Promise<User> {
-    return this.usersService.updateProfile(currentUser.id, updateProfileRequest);
+    console.log('Update profile request received for user:', currentUser.id);
+    console.log('Request body:', updateProfileRequest);
+    
+    try {
+      const updatedUser = await this.usersService.updateProfile(currentUser.id, updateProfileRequest);
+      console.log('Profile updated successfully:', updatedUser);
+      return updatedUser;
+    } catch (error) {
+      console.error('Error in updateProfile controller:', error);
+      throw error;
+    }
   }
 
   @Patch('password')
@@ -101,7 +124,19 @@ export class UsersController {
     @UserDecorator() currentUser: any,
     @Body() updatePasswordRequest: UpdatePasswordRequest
   ): Promise<void> {
-    return this.usersService.updatePassword(currentUser.id, updatePasswordRequest);
+    console.log('Update password request received for user:', currentUser.id);
+    console.log('Request body:', {
+      currentPasswordLength: updatePasswordRequest.currentPassword?.length,
+      newPasswordLength: updatePasswordRequest.newPassword?.length
+    });
+    
+    try {
+      await this.usersService.updatePassword(currentUser.id, updatePasswordRequest);
+      console.log('Password updated successfully for user:', currentUser.id);
+    } catch (error) {
+      console.error('Error in updatePassword controller:', error);
+      throw error;
+    }
   }
 
   @Patch('profile/avatar')
@@ -143,5 +178,42 @@ export class UsersController {
       console.error('Error uploading avatar:', error);
       throw new BadRequestException('Failed to update avatar');
     }
+  }
+
+  @Put(':id')
+  @ApiOperation({ summary: 'Update user' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'User updated successfully',
+    type: User
+  })
+  @ApiResponse({ 
+    status: 401, 
+    description: 'Unauthorized'
+  })
+  @ApiResponse({ 
+    status: 404, 
+    description: 'User not found' 
+  })
+  async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto): Promise<User> {
+    return this.usersService.update(id, updateUserDto);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Remove user' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'User removed successfully'
+  })
+  @ApiResponse({ 
+    status: 401, 
+    description: 'Unauthorized'
+  })
+  @ApiResponse({ 
+    status: 404, 
+    description: 'User not found' 
+  })
+  async remove(@Param('id') id: string): Promise<void> {
+    return this.usersService.remove(id);
   }
 } 

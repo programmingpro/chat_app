@@ -14,6 +14,7 @@ import {
 } from '@mui/material';
 import { styled } from '@mui/system';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { ThemeContext } from './ThemeContext';
 import { authService } from '../services/api';
 
@@ -266,15 +267,38 @@ const ProfilePage = () => {
           }}>
             {/* Аватар */}
             <Box sx={{ position: 'relative' }}>
-              <Avatar
-                src={userData.avatarUrl || "https://via.placeholder.com/92"}
-                sx={{
+              {userData.avatarUrl ? (
+                <Box sx={{
                   width: isMobile ? 72 : 92,
                   height: isMobile ? 72 : 92,
+                  position: 'relative',
                   borderRadius: '50%',
+                  overflow: 'hidden',
                   border: '1px solid transparent'
-                }}
-              />
+                }}>
+                  <Image
+                    src={`http://localhost:3000${userData.avatarUrl}`}
+                    alt="User avatar"
+                    fill
+                    style={{
+                      objectFit: 'cover',
+                    }}
+                  />
+                </Box>
+              ) : (
+                <Avatar
+                  sx={{
+                    width: isMobile ? 72 : 92,
+                    height: isMobile ? 72 : 92,
+                    borderRadius: '50%',
+                    border: '1px solid transparent',
+                    backgroundColor: '#3B82F6',
+                    fontSize: '24px'
+                  }}
+                >
+                  {userData.firstName?.[0]}{userData.lastName?.[0]}
+                </Avatar>
+              )}
               {/* Кнопка смены аватара */}
               <IconButton
                 onClick={handleChangeAvatar}

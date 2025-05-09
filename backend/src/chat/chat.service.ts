@@ -75,10 +75,46 @@ export class ChatService {
     }
   }
 
-  async findAll(): Promise<Chat[]> {
-    return this.chatRepository.find({
+  async findAll(userId: string): Promise<Chat[]> {
+    return this.chatRepository
+      .createQueryBuilder('chat')
+      .leftJoinAndSelect('chat.participants', 'participants')
+      .leftJoinAndSelect('participants.user', 'user')
+      .where('participants.user.id = :userId', { userId })
+      .getMany();
+  }
+
+  async searchChats(query: string, userId: string): Promise<Chat[]> {
+    return this.chatRepository
+      .createQueryBuilder('chat')
+      .leftJoinAndSelect('chat.participants', 'participants')
+      .leftJoinAndSelect('participants.user', 'user')
+      .where('participants.user.id = :userId', { userId })
+      .andWhere('LOWER(chat.name) LIKE LOWER(:query)', { query: `%${query}%` })
+      .getMany();
+  }
+
+  async findOne(chatId: string, userId: string): Promise<Chat> {
+    this.logger.log(`Finding chat ${chatId} for user ${userId}`);
+
+    const chat = await this.chatRepository.findOne({
+      where: { id: chatId },
       relations: ['participants', 'participants.user'],
     });
+
+    if (!chat) {
+      this.logger.error(`Chat with ID ${chatId} not found`);
+      throw new NotFoundException(`Chat with ID ${chatId} not found`);
+    }
+
+    // Проверяем, является ли пользователь участником чата
+    const participant = chat.participants.find(p => p.user.id === userId);
+    if (!participant) {
+      this.logger.error(`User ${userId} is not a participant of chat ${chatId}`);
+      throw new UnauthorizedException('You are not a participant of this chat');
+    }
+
+    return chat;
   }
 
   async addParticipants(chatId: string, userId: string, updateRequest: UpdateChatParticipantsRequest): Promise<Chat> {
@@ -348,7 +384,7 @@ export class ChatService {
   }
 
   async getMessages(chatId: string, userId: string, page: number = 1, limit: number = 20): Promise<{ messages: Message[], total: number }> {
-    this.logger.log(`Getting messages from chat ${chatId} for user ${userId}`);
+    this.logger.log(`Getting messages from chat ${chatId} for user ${userId}, page: ${page}, limit: ${limit}`);
 
     // Проверяем существование чата
     const chat = await this.chatRepository.findOne({
@@ -367,16 +403,20 @@ export class ChatService {
       throw new UnauthorizedException('You are not a participant of this chat');
     }
 
+    // Убеждаемся, что page и limit являются числами
+    const pageNumber = Math.max(1, Math.floor(page));
+    const limitNumber = Math.max(1, Math.min(100, Math.floor(limit)));
+
     // Получаем сообщения с пагинацией
     const [messages, total] = await this.messageRepository.findAndCount({
       where: { chat: { id: chatId } },
       relations: ['user'],
       order: { createdAt: 'DESC' },
-      skip: (page - 1) * limit,
-      take: limit,
+      skip: (pageNumber - 1) * limitNumber,
+      take: limitNumber,
     });
 
-    this.logger.log(`Found ${total} messages, returning ${messages.length} messages for page ${page}`);
+    this.logger.log(`Found ${total} messages, returning ${messages.length} messages for page ${pageNumber}`);
     return { messages, total };
   }
 } 

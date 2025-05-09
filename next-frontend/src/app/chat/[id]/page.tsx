@@ -1,7 +1,14 @@
 'use client';
 
+import React from 'react';
 import ChatPage from '../../pages/ChatPage'
 
-export default function Chat({ params }: { params: { id: string } }) {
-  return <ChatPage chatId={params.id} />
+interface ChatParams {
+  id: string;
+}
+
+export default function Chat({ params }: { params: Promise<ChatParams> }) {
+  const resolvedParams = React.use(params);
+  console.log('Chat page params:', resolvedParams);
+  return <ChatPage chatId={resolvedParams.id} />
 } 

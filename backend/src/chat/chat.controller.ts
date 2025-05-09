@@ -28,8 +28,29 @@ export class ChatController {
   @Get()
   @ApiOperation({ summary: 'Get all chats' })
   @ApiResponse({ status: 200, description: 'Return all chats', type: [Chat] })
-  async findAll(): Promise<Chat[]> {
-    return this.chatService.findAll();
+  async findAll(@User('id') userId: string): Promise<Chat[]> {
+    return this.chatService.findAll(userId);
+  }
+
+  @Get('search')
+  @ApiOperation({ summary: 'Search chats by name' })
+  async searchChats(
+    @Query('query') query: string,
+    @User('id') userId: string
+  ): Promise<Chat[]> {
+    return this.chatService.searchChats(query, userId);
+  }
+
+  @Get(':chatId')
+  @ApiOperation({ summary: 'Get a chat by ID' })
+  @ApiResponse({ status: 200, description: 'Return the chat', type: Chat })
+  @ApiResponse({ status: 404, description: 'Chat not found' })
+  @ApiParam({ name: 'chatId', description: 'Chat ID' })
+  async findOne(
+    @Param('chatId') chatId: string,
+    @User('id') userId: string,
+  ): Promise<Chat> {
+    return this.chatService.findOne(chatId, userId);
   }
 
   @Patch(':chatId/participants')
@@ -104,9 +125,14 @@ export class ChatController {
   getMessages(
     @Param('chatId') chatId: string,
     @User('id') userId: string,
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 20,
+    @Query('page') page: string = '1',
+    @Query('limit') limit: string = '20',
   ) {
-    return this.chatService.getMessages(chatId, userId, page, limit);
+    return this.chatService.getMessages(
+      chatId, 
+      userId, 
+      parseInt(page, 10) || 1, 
+      parseInt(limit, 10) || 20
+    );
   }
 } 

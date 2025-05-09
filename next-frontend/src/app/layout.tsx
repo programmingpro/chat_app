@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Providers } from "./providers";
-import { ThemeProvider } from './pages/ThemeContext'
+import AppLayout from "./components/AppLayout";
 
 export const metadata: Metadata = {
   title: "Chat App",
@@ -10,17 +10,17 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <html lang="en">
-      <body className="antialiased">
-        <ThemeProvider>
-          <Providers>
+    <html lang="en" suppressHydrationWarning>
+      <body suppressHydrationWarning>
+        <Providers>
+          <AppLayout>
             {children}
-          </Providers>
-        </ThemeProvider>
+          </AppLayout>
+        </Providers>
       </body>
     </html>
   );
