@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, UnauthorizedException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException, Logger, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Chat } from './entities/chat.entity';
@@ -349,8 +349,13 @@ export class ChatService {
     this.logger.log(`User ${userId} left chat ${chatId}`);
   }
 
-  async createMessage(chatId: string, userId: string, createMessageRequest: CreateMessageRequest): Promise<Message> {
+  async createMessage(
+    chatId: string, 
+    userId: string, 
+    createMessageRequest: CreateMessageRequest
+  ): Promise<Message> {
     this.logger.log(`Creating message in chat ${chatId} by user ${userId}`);
+    this.logger.log('Message request:', createMessageRequest);
 
     // Проверяем существование чата
     const chat = await this.chatRepository.findOne({
@@ -369,9 +374,16 @@ export class ChatService {
       throw new UnauthorizedException('You are not a participant of this chat');
     }
 
+    // Проверяем, что есть хотя бы контент или файл
+    if (!createMessageRequest.content && !createMessageRequest.fileUrl && !createMessageRequest.fileName) {
+      throw new BadRequestException('Message must contain either content or file');
+    }
+
     // Создаем сообщение
     const message = this.messageRepository.create({
-      content: createMessageRequest.content,
+      content: createMessageRequest.content || null,
+      fileUrl: createMessageRequest.fileUrl || null,
+      fileName: createMessageRequest.fileName || null,
       chat,
       user: participant.user,
     });

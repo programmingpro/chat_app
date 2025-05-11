@@ -7,8 +7,14 @@ export class Message {
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
-    @Column({ type: 'text' })
+    @Column({ type: 'text', nullable: true })
     content: string;
+
+    @Column({ nullable: true })
+    fileUrl: string;
+
+    @Column({ nullable: true })
+    fileName: string;
 
     @ManyToOne(() => Chat, chat => chat.messages)
     @JoinColumn({ name: 'chatId' })

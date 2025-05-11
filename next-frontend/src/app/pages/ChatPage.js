@@ -18,6 +18,9 @@ import Background from '../components/Background/Background';
 import { styled } from '@mui/system';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import Image from 'next/image';
+import AttachFileIcon from '@mui/icons-material/AttachFile';
+import SendIcon from '@mui/icons-material/Send';
+import CloseIcon from '@mui/icons-material/Close';
 
 const Header = styled(Box)({
   display: 'flex',
@@ -57,7 +60,7 @@ const UserAvatar = styled(Avatar)({
   }
 });
 
-const BACKEND_URL = 'http://localhost:3000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
 const ChatPage = ({ chatId }) => {
   const { isDarkMode } = useContext(ThemeContext);
@@ -70,6 +73,35 @@ const ChatPage = ({ chatId }) => {
   const [sending, setSending] = useState(false);
   const [messages, setMessages] = useState([]);
   const messagesEndRef = useRef(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const fileInputRef = useRef(null);
+  const [uploadedFile, setUploadedFile] = useState(null);
+  const [fileUploading, setFileUploading] = useState(false);
+
+  const fetchMessages = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await fetch(`${API_URL}/chats/${chatId}/messages`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch messages');
+      }
+
+      const data = await response.json();
+      setMessages(data.messages.reverse()); // Переворачиваем массив, чтобы новые сообщения были внизу
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+      setError(error.message);
+    }
+  };
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -79,7 +111,7 @@ const ChatPage = ({ chatId }) => {
           throw new Error('No authentication token found');
         }
 
-        const response = await fetch(`${BACKEND_URL}/users/profile`, {
+        const response = await fetch(`${API_URL}/users/profile`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -108,7 +140,7 @@ const ChatPage = ({ chatId }) => {
           throw new Error('No authentication token found');
         }
 
-        const response = await fetch(`${BACKEND_URL}/chats/${chatId}`, {
+        const response = await fetch(`${API_URL}/chats/${chatId}`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -122,7 +154,7 @@ const ChatPage = ({ chatId }) => {
         const data = await response.json();
         console.log('Chat data received:', data);
         console.log('Avatar URL:', data.avatarUrl);
-        console.log('Full avatar URL:', `${BACKEND_URL}${data.avatarUrl}`);
+        console.log('Full avatar URL:', `${API_URL}${data.avatarUrl}`);
         setChat(data);
       } catch (error) {
         console.error('Error fetching chat:', error);
@@ -142,31 +174,6 @@ const ChatPage = ({ chatId }) => {
   }, [chatId]);
 
   useEffect(() => {
-    const fetchMessages = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-          throw new Error('No authentication token found');
-        }
-
-        const response = await fetch(`${BACKEND_URL}/chats/${chatId}/messages`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch messages');
-        }
-
-        const data = await response.json();
-        setMessages(data.messages.reverse()); // Переворачиваем массив, чтобы новые сообщения были внизу
-      } catch (error) {
-        console.error('Error fetching messages:', error);
-        setError(error.message);
-      }
-    };
-
     if (chatId) {
       fetchMessages();
     }
@@ -184,34 +191,68 @@ const ChatPage = ({ chatId }) => {
     router.push('/chat-list');
   };
 
-  const handleSendMessage = async () => {
-    if (!message.trim()) return;
+  const uploadFile = async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await fetch(`${API_URL}/upload`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: formData,
+    });
+    if (!response.ok) {
+      throw new Error('Ошибка загрузки файла');
+    }
+    return await response.json(); // { fileUrl, fileName }
+  };
 
+  const handleFileSelect = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      setFileUploading(true);
+      const { fileUrl, fileName } = await uploadFile(file);
+      setUploadedFile({ fileUrl, fileName });
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setFileUploading(false);
+    }
+  };
+
+  const handleAttachClick = () => {
+    fileInputRef.current.click();
+  };
+
+  const handleSendMessage = async () => {
+    if (!message.trim() && !uploadedFile) return;
     try {
       setSending(true);
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-
-      const response = await fetch(`${BACKEND_URL}/chats/${chatId}/messages`, {
+      const requestData = {
+        content: message.trim() || null,
+        fileUrl: uploadedFile?.fileUrl || null,
+        fileName: uploadedFile?.fileName || null,
+      };
+      const response = await fetch(`${API_URL}/chats/${chatId}/messages`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ content: message })
+        body: JSON.stringify(requestData)
       });
-
       if (!response.ok) {
-        throw new Error('Failed to send message');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to send message');
       }
-
-      const newMessage = await response.json();
-      setMessages(prev => [...prev, newMessage]);
       setMessage('');
+      setUploadedFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      await fetchMessages();
     } catch (error) {
-      console.error('Error sending message:', error);
       setError(error.message);
     } finally {
       setSending(false);
@@ -345,7 +386,7 @@ const ChatPage = ({ chatId }) => {
                   overflow: 'hidden'
                 }}>
                   <Image
-                    src={`${BACKEND_URL}${profile.avatarUrl}`}
+                    src={`${API_URL}${profile.avatarUrl}`}
                     alt={profile.username}
                     fill
                     style={{
@@ -394,7 +435,7 @@ const ChatPage = ({ chatId }) => {
                 mr: 2
               }}>
                 <Image
-                  src={`${BACKEND_URL}${chat.avatarUrl}`}
+                  src={`${API_URL}${chat.avatarUrl}`}
                   alt={chat.name}
                   fill
                   style={{
@@ -475,7 +516,7 @@ const ChatPage = ({ chatId }) => {
                       flexShrink: 0
                     }}>
                       <Image
-                        src={`${BACKEND_URL}${profile.avatarUrl}`}
+                        src={`${API_URL}${profile.avatarUrl}`}
                         alt={`${profile.firstName} ${profile.lastName}`}
                         fill
                         style={{
@@ -510,7 +551,7 @@ const ChatPage = ({ chatId }) => {
                         flexShrink: 0
                       }}>
                         <Image
-                          src={`${BACKEND_URL}${participant.user.avatarUrl}`}
+                          src={`${API_URL}${participant.user.avatarUrl}`}
                           alt={`${participant.user.firstName} ${participant.user.lastName}`}
                           fill
                           style={{
@@ -575,9 +616,41 @@ const ChatPage = ({ chatId }) => {
                           })()
                       }
                     </Typography>
-                    <Typography sx={{ wordBreak: 'break-word' }}>
-                      {msg.content}
-                    </Typography>
+                    {msg.content && (
+                      <Typography sx={{ wordBreak: 'break-word' }}>
+                        {msg.content}
+                      </Typography>
+                    )}
+                    {msg.fileUrl && msg.fileName && (
+                      <Box sx={{ mt: 1 }}>
+                        {/\.(jpe?g|png|gif|webp|bmp|svg)$/i.test(msg.fileName) ? (
+                          <img
+                            src={`${API_URL}${msg.fileUrl}`}
+                            alt={msg.fileName}
+                            style={{ maxWidth: 300, maxHeight: 300, borderRadius: 8, display: 'block' }}
+                          />
+                        ) : /\.(mp3|wav|ogg)$/i.test(msg.fileName) ? (
+                          <audio controls style={{ maxWidth: 300 }}>
+                            <source src={`${API_URL}${msg.fileUrl}`} />
+                            Ваш браузер не поддерживает аудио.
+                          </audio>
+                        ) : /\.(mp4|webm|ogg)$/i.test(msg.fileName) ? (
+                          <video controls style={{ maxWidth: 300 }}>
+                            <source src={`${API_URL}${msg.fileUrl}`} />
+                            Ваш браузер не поддерживает видео.
+                          </video>
+                        ) : (
+                          <a
+                            href={`${API_URL}${msg.fileUrl}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ color: '#1976d2', textDecoration: 'underline' }}
+                          >
+                            📎 {msg.fileName}
+                          </a>
+                        )}
+                      </Box>
+                    )}
                   </Box>
                 </Box>
               </Box>
@@ -597,77 +670,81 @@ const ChatPage = ({ chatId }) => {
             padding: '8px',
             border: isDarkMode ? '1px solid #374151' : '1px solid #E5E7EB',
           }}
+          component="form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSendMessage();
+          }}
         >
-          <TextField
-            fullWidth
-            variant="outlined"
-            placeholder="Напишите сообщение..."
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyPress={handleKeyPress}
-            disabled={sending}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                height: '40px',
-                backgroundColor: isDarkMode ? '#1F2937' : '#FFFFFF',
-                borderRadius: '4px',
-                '& fieldset': {
-                  borderColor: isDarkMode ? '#374151' : '#E5E7EB',
-                },
-                '&:hover fieldset': {
-                  borderColor: isDarkMode ? '#4B5563' : '#D1D5DB',
-                },
-                '&.Mui-focused fieldset': {
-                  borderColor: isDarkMode ? '#3B82F6' : '#2563EB',
-                  borderWidth: '1px',
-                },
-              },
-              '& .MuiInputBase-input': {
-                color: isDarkMode ? '#F9FAFB' : '#111827',
-                padding: '0 14px',
-                fontSize: '14px',
-                '&::placeholder': {
-                  color: isDarkMode ? '#9CA3AF' : '#6B7280',
-                  opacity: 1,
-                },
-              },
-            }}
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileSelect}
+            style={{ display: 'none' }}
           />
-          
           <IconButton 
-            onClick={handleSendMessage}
-            disabled={sending || !message.trim()}
+            onClick={handleAttachClick}
+            type="button"
             sx={{ 
-              minWidth: '40px',
-              minHeight: '40px',
-              backgroundColor: '#3B82F6',
-              borderRadius: '8px',
-              marginLeft: '8px',
+              color: 'primary.main',
               '&:hover': {
-                backgroundColor: '#2563EB',
-              },
-              '&:disabled': {
-                backgroundColor: isDarkMode ? '#374151' : '#E5E7EB',
+                bgcolor: 'action.hover',
               }
             }}
           >
-            {sending ? (
-              <CircularProgress size={20} sx={{ color: '#FFFFFF' }} />
-            ) : (
-              <Box 
-                component="svg"
-                width="24px"
-                height="24px"
-                viewBox="0 0 24 24"
-                fill="none"
-                sx={{
-                  stroke: '#FFFFFF',
-                  strokeWidth: '1.5',
+            <AttachFileIcon />
+          </IconButton>
+          {selectedFile && (
+            <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
+              {selectedFile.name}
+            </Typography>
+          )}
+          {uploadedFile && (
+            <Box sx={{ display: 'flex', alignItems: 'center', ml: 1 }}>
+              <Typography variant="body2" color="text.secondary">
+                {uploadedFile.fileName}
+              </Typography>
+              {fileUploading && (
+                <CircularProgress size={20} sx={{ ml: 1 }} />
+              )}
+              <IconButton
+                size="small"
+                onClick={() => {
+                  setUploadedFile(null);
+                  if (fileInputRef.current) fileInputRef.current.value = '';
                 }}
+                sx={{ ml: 1 }}
+                disabled={fileUploading}
               >
-                <path d="M3 10L0 0C7.17267 2.14085 13.9365 5.52277 20 10C13.9369 14.4771 7.17339 17.8591 0.0011 20L3 10Z"/>
-              </Box>
-            )}
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            </Box>
+          )}
+          <TextField
+            fullWidth
+            variant="outlined"
+            placeholder="Type a message..."
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSendMessage();
+              }
+            }}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 2,
+                bgcolor: 'background.paper',
+              },
+            }}
+          />
+          <IconButton 
+            type="submit"
+            color="primary"
+            disabled={(!message.trim() && !uploadedFile) || sending}
+          >
+            <SendIcon />
           </IconButton>
         </Box>
       </Container>
