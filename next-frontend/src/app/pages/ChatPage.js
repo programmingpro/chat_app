@@ -8,7 +8,19 @@ import {
   Badge,
   Avatar,
   Container,
-  CircularProgress
+  CircularProgress,
+  Menu,
+  MenuItem,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  List,
+  ListItem,
+  ListItemAvatar,
+  ListItemText,
+  Checkbox
 } from '@mui/material';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import { ArrowBack } from '@mui/icons-material';
@@ -21,12 +33,13 @@ import Image from 'next/image';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import SendIcon from '@mui/icons-material/Send';
 import CloseIcon from '@mui/icons-material/Close';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 const Header = styled(Box)({
   display: 'flex',
   alignItems: 'center',
   width: '780px',
-  padding: '16px 0',
+  padding: '16px 0',  
   position: 'relative'
 });
 
@@ -77,8 +90,27 @@ const ChatPage = ({ chatId }) => {
   const fileInputRef = useRef(null);
   const [uploadedFile, setUploadedFile] = useState(null);
   const [fileUploading, setFileUploading] = useState(false);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isParticipantsDialogOpen, setIsParticipantsDialogOpen] = useState(false);
+  const [selectedUsers, setSelectedUsers] = useState([]);
+  const [availableUsers, setAvailableUsers] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Проверяем авторизацию при загрузке компонента
+  const checkAuth = () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.log('No token found, redirecting to login');
+      router.push('/login');
+      return false;
+    }
+    return true;
+  };
 
   const fetchMessages = async () => {
+    if (!checkAuth()) return;
+
     try {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -92,19 +124,37 @@ const ChatPage = ({ chatId }) => {
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          router.push('/login');
+          return;
+        }
         throw new Error('Failed to fetch messages');
       }
 
       const data = await response.json();
       setMessages(data.messages.reverse()); // Переворачиваем массив, чтобы новые сообщения были внизу
+
+      // Отмечаем сообщения как прочитанные после получения новых сообщений
+      await fetch(`${API_URL}/chats/${chatId}/messages/read`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
     } catch (error) {
       console.error('Error fetching messages:', error);
       setError(error.message);
+      if (error.message === 'Not authenticated') {
+        router.push('/login');
+      }
     }
   };
 
   useEffect(() => {
     const fetchProfile = async () => {
+      if (!checkAuth()) return;
+
       try {
         const token = localStorage.getItem('token');
         if (!token) {
@@ -118,6 +168,10 @@ const ChatPage = ({ chatId }) => {
         });
 
         if (!response.ok) {
+          if (response.status === 401) {
+            router.push('/login');
+            return;
+          }
           throw new Error('Failed to fetch profile');
         }
 
@@ -125,14 +179,19 @@ const ChatPage = ({ chatId }) => {
         setProfile(data);
       } catch (error) {
         console.error('Error fetching profile:', error);
+        if (error.message === 'Not authenticated') {
+          router.push('/login');
+        }
       }
     };
 
     fetchProfile();
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     const fetchChat = async () => {
+      if (!checkAuth()) return;
+
       try {
         console.log('Fetching chat with ID:', chatId);
         const token = localStorage.getItem('token');
@@ -147,6 +206,10 @@ const ChatPage = ({ chatId }) => {
         });
 
         if (!response.ok) {
+          if (response.status === 401) {
+            router.push('/login');
+            return;
+          }
           const errorData = await response.json();
           throw new Error(errorData.message || 'Failed to fetch chat');
         }
@@ -159,6 +222,9 @@ const ChatPage = ({ chatId }) => {
       } catch (error) {
         console.error('Error fetching chat:', error);
         setError(error.message);
+        if (error.message === 'Not authenticated') {
+          router.push('/login');
+        }
       } finally {
         setLoading(false);
       }
@@ -171,13 +237,13 @@ const ChatPage = ({ chatId }) => {
       setError('No chat ID provided');
       setLoading(false);
     }
-  }, [chatId]);
+  }, [chatId, router]);
 
   useEffect(() => {
-    if (chatId) {
+    if (chat?.id) {
       fetchMessages();
     }
-  }, [chatId]);
+  }, [chat?.id]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -225,37 +291,52 @@ const ChatPage = ({ chatId }) => {
     fileInputRef.current.click();
   };
 
-  const handleSendMessage = async () => {
+  const handleSendMessage = async (e) => {
     if (!message.trim() && !uploadedFile) return;
+
     try {
-      setSending(true);
-      const requestData = {
-        content: message.trim() || null,
-        fileUrl: uploadedFile?.fileUrl || null,
-        fileName: uploadedFile?.fileName || null,
+      let messageData = {
+        content: message.trim()
       };
-      const response = await fetch(`${API_URL}/chats/${chatId}/messages`, {
+
+      if (uploadedFile) {
+        messageData = {
+          fileUrl: uploadedFile.fileUrl,
+          fileName: uploadedFile.fileName
+        };
+      }
+
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await fetch(`${API_URL}/chats/${chat.id}/messages`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(requestData)
+        body: JSON.stringify(messageData)
       });
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to send message');
+        throw new Error('Failed to send message');
       }
+
       setMessage('');
       setUploadedFile(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-      await fetchMessages();
+      fetchMessages();
+      // Отмечаем сообщения как прочитанные после отправки
+      fetch(`${API_URL}/chats/${chat.id}/messages/read`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
     } catch (error) {
-      setError(error.message);
-    } finally {
-      setSending(false);
+      console.error('Error sending message:', error);
     }
   };
 
@@ -263,6 +344,251 @@ const ChatPage = ({ chatId }) => {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
       handleSendMessage();
+    }
+  };
+
+  const handleMenuClick = (event) => {
+    event.stopPropagation();
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = (event) => {
+    event?.stopPropagation();
+    setAnchorEl(null);
+  };
+
+  const handleMarkAsRead = async (event) => {
+    event.stopPropagation();
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/chats/${chatId}/messages/read`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to mark chat as read');
+      }
+
+      handleMenuClose();
+    } catch (error) {
+      console.error('Error marking chat as read:', error);
+    }
+  };
+
+  const handleMarkAsUnread = async (event) => {
+    event.stopPropagation();
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/chats/${chatId}/messages/unread`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to mark chat as unread');
+      }
+
+      handleMenuClose();
+    } catch (error) {
+      console.error('Error marking chat as unread:', error);
+    }
+  };
+
+  const handleDeleteChat = async (event) => {
+    event.stopPropagation();
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/chats/${chatId}/leave`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to leave chat');
+      }
+
+      handleMenuClose();
+      router.push('/chat-list');
+    } catch (error) {
+      console.error('Error leaving chat:', error);
+    }
+  };
+
+  const handleUpdateParticipantRole = async (userId, newRole) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/chats/${chat.id}/participants`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          participants: [{
+            userId: userId,
+            role: newRole
+          }]
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update participant role');
+      }
+
+      // Обновляем список участников сразу после изменения роли
+      setChat(prevChat => ({
+        ...prevChat,
+        participants: prevChat.participants.map(p => 
+          p.user.id === userId ? { ...p, role: newRole } : p
+        )
+      }));
+
+      handleMenuClose();
+    } catch (error) {
+      console.error('Error updating participant role:', error);
+    }
+  };
+
+  const handleRemoveParticipant = async (userId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/chats/${chat.id}/participants`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify([userId])
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to remove participant');
+      }
+
+      // Обновляем список участников сразу после удаления
+      setChat(prevChat => ({
+        ...prevChat,
+        participants: prevChat.participants.filter(p => p.user.id !== userId)
+      }));
+
+      handleMenuClose();
+    } catch (error) {
+      console.error('Error removing participant:', error);
+    }
+  };
+
+  const handleSearchUsers = async (query) => {
+    if (!query.trim()) {
+      setAvailableUsers([]);
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/users/search?query=${encodeURIComponent(query)}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': '*/*',
+          'Accept-Language': 'ru,en;q=0.9',
+          'Connection': 'keep-alive',
+          'Origin': 'http://localhost:3001',
+          'Referer': 'http://localhost:3001/',
+          'Sec-Fetch-Dest': 'empty',
+          'Sec-Fetch-Mode': 'cors',
+          'Sec-Fetch-Site': 'same-site'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to search users');
+      }
+
+      const data = await response.json();
+      console.log('Search results:', data);
+
+      // Проверяем, что data является массивом
+      if (!Array.isArray(data)) {
+        console.error('Invalid response format:', data);
+        setAvailableUsers([]);
+        return;
+      }
+
+      // Фильтруем пользователей, которые уже есть в чате
+      const currentParticipantIds = chat?.participants?.map(p => p.user.id) || [];
+      const filteredUsers = data.filter(user => !currentParticipantIds.includes(user.id));
+      console.log('Filtered users:', filteredUsers);
+      setAvailableUsers(filteredUsers);
+    } catch (error) {
+      console.error('Error searching users:', error);
+      setAvailableUsers([]);
+    }
+  };
+
+  // Добавляем debounce для поиска
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchQuery.trim()) {
+        handleSearchUsers(searchQuery);
+      } else {
+        setAvailableUsers([]);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const handleUpdateParticipants = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/chats/${chat.id}/participants`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          participants: selectedUsers.map(userId => ({
+            userId: userId,
+            role: 'member'
+          }))
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update participants');
+      }
+
+      // Обновляем данные чата после добавления участников
+      const updatedChatResponse = await fetch(`${API_URL}/chats/${chat.id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (updatedChatResponse.ok) {
+        const updatedChatData = await updatedChatResponse.json();
+        setChat(updatedChatData);
+      }
+
+      // Очищаем только выбранных пользователей и результаты поиска
+      setSelectedUsers([]);
+      setAvailableUsers([]);
+      setSearchQuery('');
+    } catch (error) {
+      console.error('Error updating participants:', error);
     }
   };
 
@@ -337,13 +663,13 @@ const ChatPage = ({ chatId }) => {
           zIndex: 1
         }}>
         <Header>
-          <Box sx={{ 
-            display: 'flex', 
-            alignItems: 'center',
-            transform: 'translateX(-30px)', 
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center',
+          transform: 'translateX(-30px)', 
             border: '1px solid transparent',
             width: 'auto'
-          }}>
+        }}>
             <IconButton onClick={handleGoBack}>
               <ArrowBack sx={{ color: isDarkMode ? '#E5E7EB' : '#000000' }} />
             </IconButton>
@@ -445,11 +771,11 @@ const ChatPage = ({ chatId }) => {
                 />
               </Box>
             ) : (
-              <Avatar 
-                sx={{ 
+            <Avatar 
+              sx={{ 
                   width: 40, 
                   height: 40, 
-                  mr: 2,
+                mr: 2,
                   bgcolor: isDarkMode ? '#3B82F6' : '#2563EB',
                   color: '#FFFFFF'
                 }}
@@ -482,7 +808,7 @@ const ChatPage = ({ chatId }) => {
                 {chat.type === 'group' ? 'Групповой чат' : 'Личный чат'}
               </Typography>
             </Box>
-            <IconButton>
+            <IconButton onClick={handleMenuClick}>
               <MoreVertIcon sx={{ color: isDarkMode ? '#E5E7EB' : '#6B7280' }} />
             </IconButton>
           </Box>
@@ -498,7 +824,7 @@ const ChatPage = ({ chatId }) => {
             {messages.map((msg) => (
               <Box
                 key={msg.id}
-                sx={{
+                sx={{ 
                   display: 'flex',
                   alignItems: 'flex-start',
                   gap: '12px',
@@ -539,41 +865,38 @@ const ChatPage = ({ chatId }) => {
                     </Avatar>
                   )
                 ) : (
-                  (() => {
-                    const participant = chat.participants.find(p => p.user.id === msg.senderId);
-                    return participant?.user.avatarUrl ? (
-                      <Box sx={{
-                        width: 40,
-                        height: 40,
-                        position: 'relative',
-                        borderRadius: '50%',
-                        overflow: 'hidden',
-                        flexShrink: 0
-                      }}>
-                        <Image
-                          src={`${API_URL}${participant.user.avatarUrl}`}
-                          alt={`${participant.user.firstName} ${participant.user.lastName}`}
-                          fill
-                          style={{
-                            objectFit: 'cover',
-                          }}
-                          unoptimized
-                        />
-                      </Box>
-                    ) : (
-                      <Avatar 
-                        sx={{ 
-                          width: 40, 
-                          height: 40,
-                          bgcolor: isDarkMode ? '#3B82F6' : '#2563EB',
-                          color: '#FFFFFF',
-                          flexShrink: 0
+                  msg.user?.avatarUrl ? (
+                    <Box sx={{
+                      width: 40,
+                      height: 40,
+                      position: 'relative',
+                      borderRadius: '50%',
+                      overflow: 'hidden',
+                      flexShrink: 0
+                    }}>
+                      <Image
+                        src={`${API_URL}${msg.user.avatarUrl}`}
+                        alt={`${msg.user.firstName} ${msg.user.lastName}`}
+                        fill
+                        style={{
+                          objectFit: 'cover',
                         }}
-                      >
-                        {participant?.user.firstName?.[0]}{participant?.user.lastName?.[0]}
-                      </Avatar>
-                    );
-                  })()
+                        unoptimized
+                      />
+                    </Box>
+                  ) : (
+                    <Avatar 
+                      sx={{ 
+                        width: 40, 
+                        height: 40,
+                        bgcolor: isDarkMode ? '#3B82F6' : '#2563EB',
+                        color: '#FFFFFF',
+                        flexShrink: 0
+                      }}
+                    >
+                      {msg.user?.firstName?.[0]}{msg.user?.lastName?.[0]}
+                    </Avatar>
+                  )
                 )}
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
                   <Box
@@ -610,10 +933,7 @@ const ChatPage = ({ chatId }) => {
                     >
                       {msg.senderId === profile?.id 
                         ? `${profile?.firstName} ${profile?.lastName}`
-                        : (() => {
-                            const participant = chat.participants.find(p => p.user.id === msg.senderId);
-                            return `${participant?.user.firstName} ${participant?.user.lastName}`;
-                          })()
+                        : `${msg.user?.firstName} ${msg.user?.lastName}`
                       }
                     </Typography>
                     {msg.content && (
@@ -658,6 +978,358 @@ const ChatPage = ({ chatId }) => {
             <div ref={messagesEndRef} />
           </Box>
         </ChatContainer>
+
+        <Menu
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl)}
+          onClose={handleMenuClose}
+          PaperProps={{
+            sx: {
+              backgroundColor: isDarkMode ? '#1F2937' : '#FFFFFF',
+              color: isDarkMode ? '#F9FAFB' : '#111827',
+              '& .MuiMenuItem-root': {
+                color: isDarkMode ? '#F9FAFB' : '#111827',
+                '&:hover': {
+                  backgroundColor: isDarkMode ? '#374151' : '#F3F4F6',
+                },
+              },
+            },
+          }}
+        >
+          {chat?.participants?.find(p => p.user.id === profile?.id)?.role === 'admin' && (
+            <MenuItem onClick={() => {
+              handleMenuClose();
+              setIsParticipantsDialogOpen(true);
+            }}>
+              Управление участниками
+            </MenuItem>
+          )}
+          <MenuItem onClick={handleMarkAsRead}>
+            Отметить как прочитанное
+          </MenuItem>
+          <MenuItem onClick={handleMarkAsUnread}>
+            Отметить как непрочитанное
+          </MenuItem>
+          <MenuItem 
+            onClick={() => {
+              handleMenuClose();
+              setIsDeleteDialogOpen(true);
+            }}
+            sx={{ color: '#EF4444' }}
+          >
+            Удалить чат
+          </MenuItem>
+        </Menu>
+
+        <Dialog
+          open={isDeleteDialogOpen}
+          onClose={() => setIsDeleteDialogOpen(false)}
+          PaperProps={{
+            sx: {
+              backgroundColor: isDarkMode ? '#1F2937' : '#FFFFFF',
+              color: isDarkMode ? '#F9FAFB' : '#111827',
+            },
+          }}
+        >
+          <DialogTitle>Удалить чат?</DialogTitle>
+          <DialogContent>
+            <Typography>
+              Вы уверены, что хотите удалить этот чат? Это действие нельзя отменить.
+            </Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button 
+              onClick={() => setIsDeleteDialogOpen(false)}
+              sx={{ 
+                color: isDarkMode ? '#9CA3AF' : '#6B7280',
+                '&:hover': {
+                  backgroundColor: isDarkMode ? '#374151' : '#F3F4F6',
+                },
+              }}
+            >
+              Отмена
+            </Button>
+            <Button 
+              onClick={handleDeleteChat}
+              color="error"
+              variant="contained"
+            >
+              Удалить
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog
+          open={isParticipantsDialogOpen}
+          onClose={() => {
+            setIsParticipantsDialogOpen(false);
+            setSelectedUsers([]);
+            setAvailableUsers([]);
+          }}
+          maxWidth="sm"
+          fullWidth
+          PaperProps={{
+            sx: {
+              backgroundColor: isDarkMode ? '#1F2937' : '#FFFFFF',
+              borderRadius: '12px',
+            }
+          }}
+        >
+          <DialogTitle sx={{ color: isDarkMode ? '#F9FAFB' : '#1F2937' }}>
+            Управление участниками
+          </DialogTitle>
+          <DialogContent>
+            {/* Текущие участники */}
+            <Typography
+              sx={{
+                color: isDarkMode ? '#9CA3AF' : '#6B7280',
+                fontSize: '14px',
+                fontWeight: 600,
+                mb: 2,
+                mt: 1
+              }}
+            >
+              Текущие участники
+            </Typography>
+            <List>
+              {chat?.participants?.map((participant) => (
+                <ListItem 
+                  key={participant.user.id}
+                  secondaryAction={
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      {participant.user.id !== profile?.id && (
+                        <>
+                          {chat?.participants?.find(p => p.user.id === profile?.id)?.role === 'admin' && (
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              onClick={() => handleUpdateParticipantRole(
+                                participant.user.id,
+                                participant.role === 'admin' ? 'member' : 'admin'
+                              )}
+                              sx={{
+                                color: isDarkMode ? '#9CA3AF' : '#6B7280',
+                                borderColor: isDarkMode ? '#374151' : '#D1D5DB',
+                                '&:hover': {
+                                  borderColor: isDarkMode ? '#4B5563' : '#9CA3AF',
+                                },
+                                mr: 1
+                              }}
+                            >
+                              {participant.role === 'admin' ? 'Снять админа' : 'Сделать админом'}
+                            </Button>
+                          )}
+                          <IconButton 
+                            edge="end" 
+                            onClick={() => handleRemoveParticipant(participant.user.id)}
+                            sx={{ color: '#EF4444' }}
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </>
+                      )}
+                    </Box>
+                  }
+                >
+                  <ListItemAvatar>
+                    {participant.user.avatarUrl ? (
+                      <Box sx={{
+                        width: 40,
+                        height: 40,
+                        position: 'relative',
+                        borderRadius: '50%',
+                        overflow: 'hidden'
+                      }}>
+                        <Image
+                          src={`${API_URL}${participant.user.avatarUrl}`}
+                          alt={`${participant.user.firstName} ${participant.user.lastName}`}
+                          fill
+                          style={{
+                            objectFit: 'cover',
+                          }}
+                          unoptimized
+                        />
+                      </Box>
+                    ) : (
+                      <Avatar
+                        sx={{
+                          width: 40,
+                          height: 40,
+                          bgcolor: isDarkMode ? '#3B82F6' : '#2563EB',
+                        }}
+                      >
+                        {participant.user.firstName?.[0]}{participant.user.lastName?.[0]}
+                      </Avatar>
+                    )}
+                  </ListItemAvatar>
+                  <ListItemText 
+                    primary={`${participant.user.firstName} ${participant.user.lastName}`}
+                    secondary={
+                      <Typography
+                        component="span"
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1,
+                          color: isDarkMode ? '#9CA3AF' : '#6B7280',
+                          fontSize: '14px'
+                        }}
+                      >
+                        <span>
+                          {participant.role === 'admin' ? 'Администратор' : 'Участник'}
+                        </span>
+                        {participant.user.id === profile?.id && (
+                          <span style={{ fontSize: '12px', fontStyle: 'italic' }}>
+                            (Вы)
+                          </span>
+                        )}
+                      </Typography>
+                    }
+                    sx={{
+                      '& .MuiListItemText-primary': {
+                        color: isDarkMode ? '#F9FAFB' : '#1F2937',
+                      },
+                      '& .MuiListItemText-secondary': {
+                        color: isDarkMode ? '#9CA3AF' : '#6B7280',
+                      }
+                    }}
+                  />
+                </ListItem>
+              ))}
+            </List>
+
+            {/* Поиск и добавление новых участников */}
+            <Box sx={{ mt: 3 }}>
+              <Typography
+                sx={{
+                  color: isDarkMode ? '#9CA3AF' : '#6B7280',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  mb: 2
+                }}
+              >
+                Добавить участников
+              </Typography>
+              <TextField
+                fullWidth
+                placeholder="Поиск пользователей..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                sx={{ 
+                  mb: 2,
+                  '& .MuiOutlinedInput-root': {
+                    backgroundColor: isDarkMode ? '#374151' : '#F3F4F6',
+                    '& fieldset': {
+                      borderColor: isDarkMode ? '#4B5563' : '#D1D5DB',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: isDarkMode ? '#6B7280' : '#9CA3AF',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: isDarkMode ? '#3B82F6' : '#2563EB',
+                    },
+                  },
+                  '& .MuiInputBase-input': {
+                    color: isDarkMode ? '#F9FAFB' : '#111827',
+                  },
+                }}
+              />
+
+              {availableUsers.length > 0 ? (
+                <List>
+                  {availableUsers.map((user) => (
+                    <ListItem key={user.id}>
+                      <Checkbox
+                        checked={selectedUsers.includes(user.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedUsers([...selectedUsers, user.id]);
+                          } else {
+                            setSelectedUsers(selectedUsers.filter(id => id !== user.id));
+                          }
+                        }}
+                        sx={{
+                          color: isDarkMode ? '#9CA3AF' : '#6B7280',
+                          '&.Mui-checked': {
+                            color: '#3B82F6',
+                          },
+                        }}
+                      />
+                      <ListItemAvatar>
+                        {user.avatarUrl ? (
+                          <Box sx={{
+                            width: 40,
+                            height: 40,
+                            position: 'relative',
+                            borderRadius: '50%',
+                            overflow: 'hidden'
+                          }}>
+                            <Image
+                              src={`${API_URL}${user.avatarUrl}`}
+                              alt={`${user.firstName} ${user.lastName}`}
+                              fill
+                              style={{
+                                objectFit: 'cover',
+                              }}
+                              unoptimized
+                            />
+                          </Box>
+                        ) : (
+                          <Avatar
+                            sx={{
+                              width: 40,
+                              height: 40,
+                              bgcolor: isDarkMode ? '#3B82F6' : '#2563EB',
+                            }}
+                          >
+                            {user.firstName?.[0]}{user.lastName?.[0]}
+                          </Avatar>
+                        )}
+                      </ListItemAvatar>
+                      <ListItemText 
+                        primary={`${user.firstName} ${user.lastName}`}
+                        sx={{
+                          '& .MuiListItemText-primary': {
+                            color: isDarkMode ? '#F9FAFB' : '#1F2937',
+                          }
+                        }}
+                      />
+                    </ListItem>
+                  ))}
+                </List>
+              ) : searchQuery.trim() ? (
+                <Typography sx={{ color: isDarkMode ? '#9CA3AF' : '#6B7280', textAlign: 'center', mt: 2 }}>
+                  Пользователи не найдены
+                </Typography>
+              ) : null}
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button 
+              onClick={() => {
+                setIsParticipantsDialogOpen(false);
+                setSelectedUsers([]);
+                setAvailableUsers([]);
+              }}
+              sx={{ color: isDarkMode ? '#9CA3AF' : '#6B7280' }}
+            >
+              Отмена
+            </Button>
+            <Button 
+              onClick={handleUpdateParticipants}
+              variant="contained"
+              disabled={selectedUsers.length === 0}
+              sx={{
+                backgroundColor: '#3B82F6',
+                '&:hover': {
+                  backgroundColor: '#2563EB',
+                },
+              }}
+            >
+              Добавить
+            </Button>
+          </DialogActions>
+        </Dialog>
 
         <Box 
           sx={{

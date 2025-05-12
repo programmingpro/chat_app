@@ -35,4 +35,7 @@ export class Message {
 
     @UpdateDateColumn()
     updatedAt: Date;
+
+    @Column('simple-array', { nullable: true })
+    readBy: string[];
 }

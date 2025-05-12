@@ -250,17 +250,17 @@ const RegistrationPage = () => {
           <form onSubmit={handleSubmit}>
             <Box sx={{ mb: 2 }}>
               <Typography variant="body2" sx={{ color: '#6B7180', fontSize: 12 }}>
-                Имя
-              </Typography>
+                  Имя
+                </Typography>
               <TextField
                 fullWidth
-                variant="outlined"
+                  variant="outlined"
                 size="small"
-                placeholder="Ярополк"
-                name="firstName"
-                value={formData.firstName}
-                onChange={handleChange}
-                required
+                  placeholder="Ярополк"
+                  name="firstName"
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  required
                 sx={{
                   mt: 1,
                   backgroundColor: isDarkMode ? '#111827' : 'white',
@@ -280,22 +280,22 @@ const RegistrationPage = () => {
                     },
                   },
                 }}
-              />
-            </Box>
+                />
+              </Box>
 
             <Box sx={{ mb: 2 }}>
               <Typography variant="body2" sx={{ color: '#6B7180', fontSize: 12 }}>
-                Фамилия
-              </Typography>
+                  Фамилия
+                </Typography>
               <TextField
                 fullWidth
-                variant="outlined"
+                  variant="outlined"
                 size="small"
-                placeholder="Иванов"
-                name="lastName"
-                value={formData.lastName}
-                onChange={handleChange}
-                required
+                  placeholder="Иванов"
+                  name="lastName"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  required
                 sx={{
                   mt: 1,
                   backgroundColor: isDarkMode ? '#111827' : 'white',
@@ -315,22 +315,22 @@ const RegistrationPage = () => {
                     },
                   },
                 }}
-              />
-            </Box>
+                />
+              </Box>
 
             <Box sx={{ mb: 2 }}>
               <Typography variant="body2" sx={{ color: '#6B7180', fontSize: 12 }}>
-                Email
-              </Typography>
+                  Email
+                </Typography>
               <TextField
                 fullWidth
-                variant="outlined"
+                  variant="outlined"
                 size="small"
-                placeholder="ivanov@yandex.ru"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                required
+                  placeholder="ivanov@yandex.ru"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
                 sx={{
                   mt: 1,
                   backgroundColor: isDarkMode ? '#111827' : 'white',
@@ -350,23 +350,23 @@ const RegistrationPage = () => {
                     },
                   },
                 }}
-              />
-            </Box>
+                />
+              </Box>
 
             <Box sx={{ mb: 2 }}>
               <Typography variant="body2" sx={{ color: '#6B7180', fontSize: 12 }}>
                 Пароль
-              </Typography>
+                </Typography>
               <TextField
                 fullWidth
-                variant="outlined"
+                  variant="outlined"
                 size="small"
-                type="password"
+                  type="password"
                 placeholder="••••••••"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                required
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
                 sx={{
                   mt: 1,
                   backgroundColor: isDarkMode ? '#111827' : 'white',
@@ -386,23 +386,23 @@ const RegistrationPage = () => {
                     },
                   },
                 }}
-              />
-            </Box>
+                />
+              </Box>
 
             <Box sx={{ mb: 3 }}>
               <Typography variant="body2" sx={{ color: '#6B7180', fontSize: 12 }}>
                 Подтвердите пароль
-              </Typography>
+                </Typography>
               <TextField
                 fullWidth
-                variant="outlined"
+                  variant="outlined"
                 size="small"
-                type="password"
+                  type="password"
                 placeholder="••••••••"
-                name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                required
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  required
                 sx={{
                   mt: 1,
                   backgroundColor: isDarkMode ? '#111827' : 'white',
@@ -422,14 +422,14 @@ const RegistrationPage = () => {
                     },
                   },
                 }}
-              />
-            </Box>
+                />
+              </Box>
 
             <Button
               type="submit"
               fullWidth
-              variant="contained"
-              disabled={loading}
+                  variant="contained"
+                  disabled={loading}
               sx={{
                 backgroundColor: '#3B82F6',
                 color: 'white',
@@ -440,8 +440,8 @@ const RegistrationPage = () => {
                   backgroundColor: '#93C5FD',
                 },
               }}
-            >
-              {loading ? 'Регистрация...' : 'Зарегистрироваться'}
+                >
+                  {loading ? 'Регистрация...' : 'Зарегистрироваться'}
             </Button>
 
             <Typography
@@ -452,8 +452,8 @@ const RegistrationPage = () => {
                 my: 2
               }}
             >
-              Регистрация с помощью
-            </Typography>
+                  Регистрация с помощью
+                </Typography>
 
             <Grid container justifyContent="center" spacing={2}>
               <Grid item>
@@ -463,7 +463,7 @@ const RegistrationPage = () => {
                   disabled
                 >
                   <img src="/assets/vk-icon.svg" alt="VK" style={{ width: 32, height: 32 }} />
-                </IconButton>
+                  </IconButton>
               </Grid>
               <Grid item>
                 <IconButton 
@@ -472,16 +472,16 @@ const RegistrationPage = () => {
                   disabled
                 >
                   <img src="/assets/G-icon.svg" alt="gmail" style={{ width: 32, height: 32 }} />
-                </IconButton>
+                  </IconButton>
               </Grid>
             </Grid>
           </form>
-        </Box>
-      </Box>
+              </Box>
+            </Box>
 
-      <Snackbar
-        open={!!error}
-        autoHideDuration={6000}
+      <Snackbar 
+        open={!!error} 
+        autoHideDuration={6000} 
         onClose={() => setError('')}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >

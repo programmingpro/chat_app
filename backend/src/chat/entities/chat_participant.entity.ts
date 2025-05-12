@@ -2,6 +2,7 @@ import { Entity, Column, CreateDateColumn, UpdateDateColumn, PrimaryGeneratedCol
 import { Chat } from './chat.entity';
 import { User } from '../../users/entities/user.entity';
 import { Role } from '../../common/Enum/Role';
+import { Message } from './message.entity';
 
 @Entity('chat_participants')
 @Index(['chatId', 'userId'], { unique: true }) // Пользователь может быть только один раз в чате
@@ -13,7 +14,8 @@ export class ChatParticipant {
 
     @Column({
         type: 'enum',
-        enum: Role
+        enum: Role,
+        default: Role.member
     })
     role: Role;
 
@@ -36,6 +38,13 @@ export class ChatParticipant {
 
     @Column()
     userId: string;
+
+    @ManyToOne(() => Message, { nullable: true })
+    @JoinColumn({ name: 'lastReadMessageId' })
+    lastReadMessage: Message;
+
+    @Column({ type: 'uuid', nullable: true })
+    lastReadMessageId: string;
 
     @CreateDateColumn()
     createdAt: Date;

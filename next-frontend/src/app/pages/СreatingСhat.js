@@ -62,21 +62,39 @@ const СreatingСhat = () => {
   const [participants, setParticipants] = useState([]);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
+  // Проверяем авторизацию при загрузке компонента
+  const checkAuth = () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.log('No token found, redirecting to login');
+      router.push('/login');
+      return false;
+    }
+    return true;
+  };
+
   useEffect(() => {
     const fetchUserData = async () => {
+      if (!checkAuth()) return;
+
       try {
         const response = await authService.getProfile();
         setUserData(response);
       } catch (error) {
         console.error('Error fetching user profile:', error);
+        if (error.message === 'Not authenticated') {
+          router.push('/login');
+        }
       }
     };
 
     fetchUserData();
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     const searchUsers = async () => {
+      if (!checkAuth()) return;
+
       if (!searchQuery) {
         setUsers([]);
         return;
@@ -91,6 +109,10 @@ const СreatingСhat = () => {
           }
         });
         if (!response.ok) {
+          if (response.status === 401) {
+            router.push('/login');
+            return;
+          }
           throw new Error('Failed to fetch users');
         }
         const data = await response.json();
@@ -99,6 +121,9 @@ const СreatingСhat = () => {
         console.error('Error searching users:', error);
         setError('Failed to load users');
         setUsers([]);
+        if (error.message === 'Not authenticated') {
+          router.push('/login');
+        }
       } finally {
         setLoading(false);
       }
@@ -106,7 +131,7 @@ const СreatingСhat = () => {
 
     const timeoutId = setTimeout(searchUsers, 300);
     return () => clearTimeout(timeoutId);
-  }, [searchQuery]);
+  }, [searchQuery, router]);
 
   const handleGoBack = () => {
     router.push('/chat-list'); 

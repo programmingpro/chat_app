@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, UnauthorizedException, Logger, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException, Logger, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Chat } from './entities/chat.entity';
@@ -9,6 +9,7 @@ import { User } from '../users/entities/user.entity';
 import { Role } from '../common/Enum/Role';
 import { Message } from './entities/message.entity';
 import { CreateMessageRequest } from '../common/DTO/CreateMessageRequest';
+import { In } from 'typeorm';
 
 @Injectable()
 export class ChatService {
@@ -25,7 +26,7 @@ export class ChatService {
     private messageRepository: Repository<Message>,
   ) {}
 
-  async createChat(createChatRequest: CreateChatRequest): Promise<Chat> {
+  async createChat(createChatRequest: CreateChatRequest, userId: string): Promise<Chat> {
     this.logger.log('Creating chat with data:', createChatRequest);
 
     try {
@@ -33,6 +34,7 @@ export class ChatService {
       const chat = this.chatRepository.create({
         name: createChatRequest.name,
         chatType: createChatRequest.chatType,
+        createdById: userId
       });
       this.logger.log('Created chat entity:', chat);
       
@@ -92,6 +94,46 @@ export class ChatService {
       .where('participants.user.id = :userId', { userId })
       .andWhere('LOWER(chat.name) LIKE LOWER(:query)', { query: `%${query}%` })
       .getMany();
+  }
+
+  async advancedSearch(query: string, userId: string): Promise<{
+    messages: Array<{
+      id: string;
+      content: string;
+      chatId: string;
+      chatName: string;
+    }>;
+    chats: Chat[];
+  }> {
+    // Поиск по сообщениям
+    const messages = await this.messageRepository
+      .createQueryBuilder('message')
+      .leftJoinAndSelect('message.chat', 'chat')
+      .leftJoinAndSelect('chat.participants', 'participants')
+      .where('participants.user.id = :userId', { userId })
+      .andWhere('LOWER(message.content) LIKE LOWER(:query)', { query: `%${query}%` })
+      .orderBy('message.createdAt', 'DESC')
+      .limit(10)
+      .getMany();
+
+    // Поиск по чатам
+    const chats = await this.chatRepository
+      .createQueryBuilder('chat')
+      .leftJoinAndSelect('chat.participants', 'participants')
+      .leftJoinAndSelect('participants.user', 'user')
+      .where('participants.user.id = :userId', { userId })
+      .andWhere('LOWER(chat.name) LIKE LOWER(:query)', { query: `%${query}%` })
+      .getMany();
+
+    return {
+      messages: messages.map(message => ({
+        id: message.id,
+        content: message.content,
+        chatId: message.chat.id,
+        chatName: message.chat.name
+      })),
+      chats
+    };
   }
 
   async findOne(chatId: string, userId: string): Promise<Chat> {
@@ -186,52 +228,38 @@ export class ChatService {
     return updatedChat;
   }
 
-  async removeParticipants(chatId: string, userId: string, participantIds: string[]): Promise<Chat> {
-    this.logger.log(`Removing participants from chat ${chatId} by user ${userId}`);
-    this.logger.log('Participant IDs to remove:', participantIds);
-
-    // Проверяем существование чата
+  async removeParticipants(chatId: string, userId: string, participantIds: string[]) {
     const chat = await this.chatRepository.findOne({
       where: { id: chatId },
       relations: ['participants', 'participants.user'],
     });
-    if (!chat) {
-      this.logger.error(`Chat with ID ${chatId} not found`);
-      throw new NotFoundException(`Chat with ID ${chatId} not found`);
-    }
-    this.logger.log('Found chat:', chat);
 
-    // Проверяем права текущего пользователя
-    const currentParticipant = chat.participants.find(p => p.user.id === userId);
-    if (!currentParticipant) {
-      this.logger.error(`User ${userId} is not a participant of chat ${chatId}`);
-      throw new UnauthorizedException('You are not a participant of this chat');
+    if (!chat) {
+      throw new NotFoundException('Chat not found');
     }
-    if (currentParticipant.role !== Role.admin) {
-      this.logger.error(`User ${userId} is not an admin of chat ${chatId}`);
-      throw new UnauthorizedException('Only admins can remove participants');
+
+    const isParticipant = chat.participants.some(p => p.user.id === userId);
+    if (!isParticipant) {
+      throw new ForbiddenException('You are not a participant of this chat');
     }
-    this.logger.log('Current participant is admin:', currentParticipant);
+
+    const isAdmin = chat.participants.find(p => p.user.id === userId)?.role === 'admin';
+    if (!isAdmin) {
+      throw new ForbiddenException('Only admins can remove participants');
+    }
+
+    // Проверяем, что participantIds является массивом
+    if (!Array.isArray(participantIds)) {
+      throw new BadRequestException('participantIds must be an array');
+    }
 
     // Удаляем участников
-    for (const participantId of participantIds) {
-      const participant = chat.participants.find(p => p.user.id === participantId);
-      if (participant) {
-        this.logger.log(`Removing participant ${participantId}`);
-        await this.chatParticipantRepository.remove(participant);
-        this.logger.log(`Removed participant ${participantId}`);
-      } else {
-        this.logger.warn(`Participant ${participantId} not found in chat`);
-      }
-    }
-
-    // Возвращаем обновленный чат
-    const updatedChat = await this.chatRepository.findOne({
-      where: { id: chatId },
-      relations: ['participants', 'participants.user'],
+    await this.chatParticipantRepository.delete({
+      chatId,
+      userId: In(participantIds)
     });
-    this.logger.log('Returning updated chat:', updatedChat);
-    return updatedChat;
+
+    return { message: 'Participants removed successfully' };
   }
 
   async updateParticipantRole(chatId: string, userId: string, targetUserId: string, newRole: Role): Promise<Chat> {
@@ -308,45 +336,31 @@ export class ChatService {
   }
 
   async leaveChat(chatId: string, userId: string): Promise<void> {
-    this.logger.log(`User ${userId} leaving chat ${chatId}`);
-
-    // Проверяем существование чата
     const chat = await this.chatRepository.findOne({
       where: { id: chatId },
-      relations: ['participants', 'participants.user'],
+      relations: ['participants']
     });
+
     if (!chat) {
-      this.logger.error(`Chat with ID ${chatId} not found`);
-      throw new NotFoundException(`Chat with ID ${chatId} not found`);
+      throw new NotFoundException('Chat not found');
     }
 
-    // Находим участника
-    const participant = chat.participants.find(p => p.user.id === userId);
-    if (!participant) {
-      this.logger.error(`User ${userId} is not a participant of chat ${chatId}`);
-      throw new UnauthorizedException('You are not a participant of this chat');
+    // Проверяем, является ли пользователь участником чата
+    const isParticipant = chat.participants.some(p => p.userId === userId);
+    if (!isParticipant) {
+      throw new NotFoundException('You are not a participant of this chat');
     }
 
-    // Если это последний участник, удаляем чат
+    // Удаляем участника из чата
+    await this.chatParticipantRepository.delete({
+      chatId,
+      userId
+    });
+
+    // Если это был последний участник, удаляем чат
     if (chat.participants.length === 1) {
       await this.chatRepository.remove(chat);
-      this.logger.log(`Chat ${chatId} deleted as last participant left`);
-      return;
     }
-
-    // Если это последний администратор, передаем права другому участнику
-    if (participant.role === Role.admin && chat.participants.filter(p => p.role === Role.admin).length === 1) {
-      const newAdmin = chat.participants.find(p => p.user.id !== userId);
-      if (newAdmin) {
-        newAdmin.role = Role.admin;
-        await this.chatParticipantRepository.save(newAdmin);
-        this.logger.log(`Admin rights transferred to user ${newAdmin.user.id}`);
-      }
-    }
-
-    // Удаляем участника
-    await this.chatParticipantRepository.remove(participant);
-    this.logger.log(`User ${userId} left chat ${chatId}`);
   }
 
   async createMessage(
@@ -430,5 +444,130 @@ export class ChatService {
 
     this.logger.log(`Found ${total} messages, returning ${messages.length} messages for page ${pageNumber}`);
     return { messages, total };
+  }
+
+  async markMessagesAsRead(chatId: string, userId: string): Promise<{ updated: number }> {
+    // Найти последнее сообщение в чате
+    const lastMessage = await this.messageRepository.findOne({
+      where: { chat: { id: chatId } },
+      order: { createdAt: 'DESC' }
+    });
+
+    if (!lastMessage) {
+      return { updated: 0 };
+    }
+
+    // Обновить lastReadMessageId у chat_participant
+    const result = await this.chatParticipantRepository.update(
+      { chatId, userId },
+      { lastReadMessageId: lastMessage.id }
+    );
+
+    return { updated: result.affected || 0 };
+  }
+
+  async markMessagesAsUnread(chatId: string, userId: string): Promise<{ updated: number }> {
+    // Найти последнее сообщение в чате
+    const lastMessage = await this.messageRepository.findOne({
+      where: { chat: { id: chatId } },
+      order: { createdAt: 'DESC' }
+    });
+
+    if (!lastMessage) {
+      return { updated: 0 };
+    }
+
+    // Обновить lastReadMessageId у chat_participant на null
+    const result = await this.chatParticipantRepository.update(
+      { chatId, userId },
+      { lastReadMessageId: null }
+    );
+
+    return { updated: result.affected || 0 };
+  }
+
+  async getChatsWithLastMessage(userId: string): Promise<Chat[]> {
+    const chats = await this.chatRepository
+      .createQueryBuilder('chat')
+      .leftJoinAndSelect('chat.participants', 'participant')
+      .leftJoinAndSelect('participant.user', 'user')
+      .leftJoinAndSelect(
+        'chat.messages',
+        'message',
+        `message.id = (
+          SELECT m.id FROM messages m
+          WHERE m."chatId" = chat.id
+          ORDER BY m."createdAt" DESC
+          LIMIT 1
+        )`
+      )
+      .leftJoinAndSelect('message.user', 'messageUser')
+      .addSelect(`(
+        SELECT COUNT(*) FROM messages m
+        WHERE m."chatId" = chat.id
+          AND m."createdAt" > COALESCE((
+            SELECT msg."createdAt" FROM messages msg WHERE msg.id = cp."lastReadMessageId"
+          ), '1970-01-01')
+          AND m."senderId" != :userId
+      )`, 'unreadCount')
+      .leftJoin('chat_participants', 'cp', 'cp."chatId" = chat.id AND cp."userId" = :userId', { userId })
+      .where('participant.userId = :userId', { userId })
+      .orderBy('chat.updatedAt', 'DESC')
+      .getRawAndEntities();
+
+    return chats.entities.map((chat, index) => ({
+      ...chat,
+      unreadCount: parseInt(chats.raw[index]?.unreadCount || '0', 10)
+    }));
+  }
+
+  async updateChatName(chatId: string, userId: string, name: string): Promise<Chat> {
+    this.logger.log(`Updating chat name for chat ${chatId} by user ${userId}`);
+
+    // Проверяем существование чата
+    const chat = await this.chatRepository.findOne({
+      where: { id: chatId },
+      relations: ['participants', 'participants.user'],
+    });
+    if (!chat) {
+      this.logger.error(`Chat with ID ${chatId} not found`);
+      throw new NotFoundException(`Chat with ID ${chatId} not found`);
+    }
+
+    // Проверяем права текущего пользователя
+    const currentParticipant = chat.participants.find(p => p.user.id === userId);
+    if (!currentParticipant) {
+      this.logger.error(`User ${userId} is not a participant of chat ${chatId}`);
+      throw new UnauthorizedException('You are not a participant of this chat');
+    }
+    if (currentParticipant.role !== Role.admin) {
+      this.logger.error(`User ${userId} is not an admin of chat ${chatId}`);
+      throw new UnauthorizedException('Only admins can update chat name');
+    }
+
+    // Обновляем название чата
+    chat.name = name;
+    await this.chatRepository.save(chat);
+    this.logger.log(`Chat name updated to ${name}`);
+
+    return chat;
+  }
+
+  async getChatParticipants(chatId: string, userId: string) {
+    const chat = await this.chatRepository.findOne({
+      where: { id: chatId },
+      relations: ['participants', 'participants.user'],
+    });
+
+    if (!chat) {
+      throw new NotFoundException('Chat not found');
+    }
+
+    const isParticipant = chat.participants.some(p => p.user.id === userId);
+    if (!isParticipant) {
+      throw new ForbiddenException('You are not a participant of this chat');
+    }
+
+    return chat.participants;
   }
 } 

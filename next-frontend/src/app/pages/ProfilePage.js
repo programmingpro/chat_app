@@ -82,8 +82,21 @@ const ProfilePage = () => {
     loading: false
   });
 
+  // Проверяем авторизацию при загрузке компонента
+  const checkAuth = () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.log('No token found, redirecting to login');
+      router.push('/login');
+      return false;
+    }
+    return true;
+  };
+
   useEffect(() => {
     const loadUserData = async () => {
+      if (!checkAuth()) return;
+
       try {
         setLoading(true);
         const data = await authService.getProfile();
@@ -97,15 +110,20 @@ const ProfilePage = () => {
       } catch (err) {
         setError('Не удалось загрузить данные профиля');
         console.error('Ошибка загрузки профиля:', err);
+        if (err.message === 'Not authenticated') {
+          router.push('/login');
+        }
       } finally {
         setLoading(false);
       }
     };
 
     loadUserData();
-  }, []);
+  }, [router]);
 
   const handleUpdateProfile = async () => {
+    if (!checkAuth()) return;
+
     try {
       setLoading(true);
       await authService.updateProfile(userData);
@@ -113,6 +131,9 @@ const ProfilePage = () => {
     } catch (err) {
       setError('Не удалось сохранить изменения');
       console.error('Ошибка сохранения профиля:', err);
+      if (err.message === 'Not authenticated') {
+        router.push('/login');
+      }
     } finally {
       setLoading(false);
     }
@@ -130,6 +151,8 @@ const ProfilePage = () => {
   };
 
   const handleChangeAvatar = async () => {
+    if (!checkAuth()) return;
+
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
@@ -149,6 +172,9 @@ const ProfilePage = () => {
         } catch (error) {
           setError('Не удалось обновить аватар');
           console.error('Ошибка при обновлении аватара:', error);
+          if (error.message === 'Not authenticated') {
+            router.push('/login');
+          }
         } finally {
           setIcons(prev => ({ ...prev, loading: false }));
         }

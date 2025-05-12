@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, UseGuards, Param, Patch, Delete, Query } from '@nestjs/common';
+import { Controller, Post, Body, Get, UseGuards, Param, Patch, Delete, Query, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { ChatService } from './chat.service';
 import { CreateChatRequest } from '../common/DTO/CreateChatRequest';
@@ -21,15 +21,18 @@ export class ChatController {
   @ApiResponse({ status: 201, description: 'Chat created successfully', type: Chat })
   @ApiResponse({ status: 400, description: 'Invalid input data' })
   @ApiResponse({ status: 404, description: 'User not found' })
-  async createChat(@Body() createChatRequest: CreateChatRequest): Promise<Chat> {
-    return this.chatService.createChat(createChatRequest);
+  async createChat(
+    @Body() createChatRequest: CreateChatRequest,
+    @User('id') userId: string
+  ): Promise<Chat> {
+    return this.chatService.createChat(createChatRequest, userId);
   }
 
   @Get()
   @ApiOperation({ summary: 'Get all chats' })
   @ApiResponse({ status: 200, description: 'Return all chats', type: [Chat] })
-  async findAll(@User('id') userId: string): Promise<Chat[]> {
-    return this.chatService.findAll(userId);
+  async getChats(@User('id') userId: string): Promise<Chat[]> {
+    return this.chatService.getChatsWithLastMessage(userId);
   }
 
   @Get('search')
@@ -39,6 +42,40 @@ export class ChatController {
     @User('id') userId: string
   ): Promise<Chat[]> {
     return this.chatService.searchChats(query, userId);
+  }
+
+  @Get('advanced-search')
+  @ApiOperation({ summary: 'Advanced search through messages and chats' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Returns search results with messages and chats',
+    schema: {
+      type: 'object',
+      properties: {
+        messages: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'string' },
+              content: { type: 'string' },
+              chatId: { type: 'string' },
+              chatName: { type: 'string' }
+            }
+          }
+        },
+        chats: {
+          type: 'array',
+          items: { $ref: '#/components/schemas/Chat' }
+        }
+      }
+    }
+  })
+  async advancedSearch(
+    @Query('query') query: string,
+    @User('id') userId: string
+  ) {
+    return this.chatService.advancedSearch(query, userId);
   }
 
   @Get(':chatId')
@@ -96,14 +133,14 @@ export class ChatController {
     return this.chatService.deleteChat(chatId, userId);
   }
 
-  @Post(':chatId/leave')
-  @ApiOperation({ summary: 'Leave a chat' })
+  @Delete(':chatId/leave')
+  @ApiOperation({ summary: 'Leave chat' })
   @ApiParam({ name: 'chatId', description: 'Chat ID' })
-  leaveChat(
+  async leaveChat(
     @Param('chatId') chatId: string,
-    @User('id') userId: string,
+    @Request() req
   ) {
-    return this.chatService.leaveChat(chatId, userId);
+    return this.chatService.leaveChat(chatId, req.user.id);
   }
 
   @Post(':chatId/messages')
@@ -134,5 +171,47 @@ export class ChatController {
       parseInt(page, 10) || 1, 
       parseInt(limit, 10) || 20
     );
+  }
+
+  @Patch(':chatId/messages/read')
+  @ApiOperation({ summary: 'Mark all messages as read in a chat' })
+  @ApiParam({ name: 'chatId', description: 'Chat ID' })
+  async markMessagesAsRead(
+    @Param('chatId') chatId: string,
+    @User('id') userId: string,
+  ) {
+    return this.chatService.markMessagesAsRead(chatId, userId);
+  }
+
+  @Patch(':chatId/messages/unread')
+  @ApiOperation({ summary: 'Mark last message as unread in a chat' })
+  @ApiParam({ name: 'chatId', description: 'Chat ID' })
+  async markMessagesAsUnread(
+    @Param('chatId') chatId: string,
+    @User('id') userId: string,
+  ) {
+    return this.chatService.markMessagesAsUnread(chatId, userId);
+  }
+
+  @Patch(':chatId/name')
+  @ApiOperation({ summary: 'Update chat name' })
+  @ApiParam({ name: 'chatId', description: 'Chat ID' })
+  async updateChatName(
+    @Param('chatId') chatId: string,
+    @User('id') userId: string,
+    @Body('name') name: string,
+  ) {
+    return this.chatService.updateChatName(chatId, userId, name);
+  }
+
+  @Get(':chatId/participants')
+  @ApiOperation({ summary: 'Get chat participants' })
+  @ApiParam({ name: 'chatId', description: 'Chat ID' })
+  @UseGuards(JwtAuthGuard)
+  async getChatParticipants(
+    @Param('chatId') chatId: string,
+    @Request() req
+  ) {
+    return this.chatService.getChatParticipants(chatId, req.user.id);
   }
 } 

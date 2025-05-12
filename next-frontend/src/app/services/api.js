@@ -15,11 +15,43 @@ api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     if (token) {
+      // Проверяем срок действия токена
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const expirationTime = payload.exp * 1000; // конвертируем в миллисекунды
+        if (Date.now() >= expirationTime) {
+          // Токен истек, удаляем его
+          localStorage.removeItem('token');
+          document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Strict';
+          window.location.href = '/login';
+          return Promise.reject('Token expired');
+        }
+      } catch (error) {
+        console.error('Error checking token:', error);
+        localStorage.removeItem('token');
+        document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Strict';
+        window.location.href = '/login';
+        return Promise.reject('Invalid token');
+      }
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
   (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Добавляем интерсептор для ответов
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Удаляем токен при получении 401 ошибки
+      localStorage.removeItem('token');
+      document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Strict';
+      window.location.href = '/login';
+    }
     return Promise.reject(error);
   }
 );
@@ -30,6 +62,7 @@ const authService = {
       const response = await api.post('/auth/register', userData);
       if (response.data.token) {
         localStorage.setItem('token', response.data.token);
+        document.cookie = `token=${response.data.token}; path=/; max-age=86400; SameSite=Strict`;
       }
       return response.data;
     } catch (error) {
@@ -37,7 +70,7 @@ const authService = {
     }
   },
 
-  async login(credentials) {
+  login: async (credentials) => {
     try {
       console.log('Sending login request to:', `${API_URL}/auth/login`);
       const response = await api.post('/auth/login', {
@@ -88,7 +121,18 @@ const authService = {
   },
 
   isAuthenticated: () => {
-    return !!localStorage.getItem('token');
+    const token = localStorage.getItem('token');
+    if (!token) return false;
+    
+    try {
+      // Проверяем, что токен не истек
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const expirationTime = payload.exp * 1000; // конвертируем в миллисекунды
+      return Date.now() < expirationTime;
+    } catch (error) {
+      console.error('Error checking token:', error);
+      return false;
+    }
   },
 
   async getProfile() {
