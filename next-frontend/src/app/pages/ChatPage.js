@@ -34,6 +34,7 @@ import AttachFileIcon from '@mui/icons-material/AttachFile';
 import SendIcon from '@mui/icons-material/Send';
 import CloseIcon from '@mui/icons-material/Close';
 import DeleteIcon from '@mui/icons-material/Delete';
+import io from 'socket.io-client';
 
 const Header = styled(Box)({
   display: 'flex',
@@ -96,6 +97,7 @@ const ChatPage = ({ chatId }) => {
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [availableUsers, setAvailableUsers] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [socket, setSocket] = useState(null);
 
   // Проверяем авторизацию при загрузке компонента
   const checkAuth = () => {
@@ -132,7 +134,13 @@ const ChatPage = ({ chatId }) => {
       }
 
       const data = await response.json();
-      setMessages(data.messages.reverse()); // Переворачиваем массив, чтобы новые сообщения были внизу
+      console.log('Fetched messages:', data.messages);
+      // Сортируем сообщения по времени создания
+      const sortedMessages = data.messages.sort((a, b) => 
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      );
+      console.log('Sorted messages:', sortedMessages);
+      setMessages(sortedMessages);
 
       // Отмечаем сообщения как прочитанные после получения новых сообщений
       await fetch(`${API_URL}/chats/${chatId}/messages/read`, {
@@ -245,6 +253,89 @@ const ChatPage = ({ chatId }) => {
     }
   }, [chat?.id]);
 
+  useEffect(() => {
+    // Подключаемся к вебсокету при монтировании компонента
+    const newSocket = io(`${API_URL}/chat`, {
+      withCredentials: true,
+      transports: ['websocket'],
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      timeout: 10000,
+      autoConnect: true,
+      auth: {
+        token: localStorage.getItem('token')
+      }
+    });
+
+    newSocket.on('connect', () => {
+      console.log('Connected to WebSocket, socket ID:', newSocket.id);
+      // Присоединяемся к комнате чата
+      newSocket.emit('joinChat', chatId);
+      console.log('Joining chat room:', chatId);
+    });
+
+    newSocket.on('connect_error', (error) => {
+      console.error('WebSocket connection error:', error);
+    });
+
+    newSocket.on('error', (error) => {
+      console.error('WebSocket error:', error);
+    });
+
+    newSocket.on('newMessage', (message) => {
+      console.log('New message received:', message);
+      setMessages(prevMessages => {
+        // Проверяем, нет ли уже такого сообщения по ID и времени создания
+        const isDuplicate = prevMessages.some(m => 
+          m.id === message.id || 
+          (m.content === message.content && 
+           m.senderId === message.senderId && 
+           Math.abs(new Date(m.createdAt).getTime() - new Date(message.createdAt).getTime()) < 1000)
+        );
+
+        if (isDuplicate) {
+          console.log('Duplicate message detected, skipping:', message);
+          return prevMessages;
+        }
+
+        console.log('Adding new message to state');
+        // Добавляем новое сообщение в конец массива
+        const updatedMessages = [...prevMessages, message];
+        // Сортируем сообщения по времени создания
+        const sortedMessages = updatedMessages.sort((a, b) => 
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        );
+        console.log('Updated messages:', sortedMessages);
+        return sortedMessages;
+      });
+    });
+
+    newSocket.on('disconnect', (reason) => {
+      console.log('Disconnected from WebSocket, reason:', reason);
+      if (reason === 'io server disconnect') {
+        // Сервер принудительно отключил клиента
+        newSocket.connect();
+      }
+    });
+
+    // Добавляем обработчик для всех входящих событий для отладки
+    newSocket.onAny((eventName, ...args) => {
+      console.log('Received event:', eventName, args);
+    });
+
+    setSocket(newSocket);
+
+    // Отключаемся от вебсокета при размонтировании компонента
+    return () => {
+      if (newSocket) {
+        console.log('Leaving chat room:', chatId);
+        newSocket.emit('leaveChat', chatId);
+        newSocket.disconnect();
+      }
+    };
+  }, [chatId]);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -324,9 +415,32 @@ const ChatPage = ({ chatId }) => {
         throw new Error('Failed to send message');
       }
 
+      const sentMessage = await response.json();
+      console.log('Message sent successfully:', sentMessage);
+
       setMessage('');
       setUploadedFile(null);
-      fetchMessages();
+      
+      // Добавляем отправленное сообщение в состояние только если его еще нет
+      setMessages(prevMessages => {
+        const isDuplicate = prevMessages.some(m => 
+          m.id === sentMessage.id || 
+          (m.content === sentMessage.content && 
+           m.senderId === sentMessage.senderId && 
+           Math.abs(new Date(m.createdAt).getTime() - new Date(sentMessage.createdAt).getTime()) < 1000)
+        );
+
+        if (isDuplicate) {
+          console.log('Duplicate message detected, skipping:', sentMessage);
+          return prevMessages;
+        }
+
+        const updatedMessages = [...prevMessages, sentMessage];
+        return updatedMessages.sort((a, b) => 
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        );
+      });
+      
       // Отмечаем сообщения как прочитанные после отправки
       fetch(`${API_URL}/chats/${chat.id}/messages/read`, {
         method: 'PATCH',

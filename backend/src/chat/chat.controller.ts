@@ -169,7 +169,7 @@ export class ChatController {
       chatId, 
       userId, 
       parseInt(page, 10) || 1, 
-      parseInt(limit, 10) || 20
+      parseInt(limit, 10) || 100
     );
   }
 

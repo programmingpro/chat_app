@@ -10,6 +10,7 @@ import { Role } from '../common/Enum/Role';
 import { Message } from './entities/message.entity';
 import { CreateMessageRequest } from '../common/DTO/CreateMessageRequest';
 import { In } from 'typeorm';
+import { ChatGateway } from './chat.gateway';
 
 @Injectable()
 export class ChatService {
@@ -24,6 +25,7 @@ export class ChatService {
     private userRepository: Repository<User>,
     @InjectRepository(Message)
     private messageRepository: Repository<Message>,
+    private chatGateway: ChatGateway
   ) {}
 
   async createChat(createChatRequest: CreateChatRequest, userId: string): Promise<Chat> {
@@ -406,10 +408,15 @@ export class ChatService {
     const savedMessage = await this.messageRepository.save(message);
     this.logger.log(`Message created with ID ${savedMessage.id}`);
 
+    // Отправляем сообщение через WebSocket
+    this.logger.log(`Sending message via WebSocket to room chat:${chatId}`);
+    this.chatGateway.server.to(`chat:${chatId}`).emit('newMessage', savedMessage);
+    this.logger.log('Message sent successfully');
+
     return savedMessage;
   }
 
-  async getMessages(chatId: string, userId: string, page: number = 1, limit: number = 20): Promise<{ messages: Message[], total: number }> {
+  async getMessages(chatId: string, userId: string, page: number = 1, limit: number = 100): Promise<{ messages: Message[], total: number }> {
     this.logger.log(`Getting messages from chat ${chatId} for user ${userId}, page: ${page}, limit: ${limit}`);
 
     // Проверяем существование чата
