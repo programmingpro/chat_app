@@ -1,24 +1,30 @@
-import { Entity, Column, CreateDateColumn, UpdateDateColumn, OneToMany, PrimaryGeneratedColumn, Index } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { ChatParticipant } from './chat_participant.entity';
-import { ChatType } from '../../../../common/Enum/ChatType';
 import { Message } from './message.entity';
+import { User } from '../../users/entities/user.entity';
+import { ChatType } from '../../common/Enum/ChatType';
 
 @Entity('chats')
-@Index(['chatType'])
-@Index(['name'])
-@Index(['createdAt'])
 export class Chat {
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
+    @Column({ nullable: true })
+    name: string;
+
     @Column({
         type: 'enum',
-        enum: ChatType
+        enum: ChatType,
+        default: ChatType.private
     })
     chatType: ChatType;
 
+    @ManyToOne(() => User)
+    @JoinColumn({ name: 'createdById' })
+    createdBy: User;
+
     @Column()
-    name: string;
+    createdById: string;
 
     @OneToMany(() => ChatParticipant, participant => participant.chat)
     participants: ChatParticipant[];

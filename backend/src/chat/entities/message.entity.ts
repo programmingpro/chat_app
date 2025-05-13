@@ -1,40 +1,41 @@
-import { Entity, Column, CreateDateColumn, UpdateDateColumn, PrimaryGeneratedColumn, ManyToOne, JoinColumn, Index } from 'typeorm';
-import { User } from '../../users/entities/user.entity';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, UpdateDateColumn, JoinColumn } from 'typeorm';
 import { Chat } from './chat.entity';
+import { User } from '../../users/entities/user.entity';
 
 @Entity('messages')
-@Index(['chatId', 'createdAt']) // Для быстрой загрузки сообщений чата по дате
-@Index(['senderId', 'createdAt']) // Для быстрого поиска сообщений пользователя
 export class Message {
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
-    @Column('text')
+    @Column({ type: 'text', nullable: true })
     content: string;
 
-    @ManyToOne(() => User, user => user.messages, {
-        onDelete: 'CASCADE',
-        nullable: false
-    })
-    @JoinColumn({ name: 'senderId' })
-    sender: User;
+    @Column({ nullable: true })
+    fileUrl: string;
 
-    @Column()
-    senderId: string;
+    @Column({ nullable: true })
+    fileName: string;
 
-    @ManyToOne(() => Chat, chat => chat.messages, {
-        onDelete: 'CASCADE',
-        nullable: false
-    })
+    @ManyToOne(() => Chat, chat => chat.messages)
     @JoinColumn({ name: 'chatId' })
     chat: Chat;
 
     @Column()
     chatId: string;
 
+    @ManyToOne(() => User, user => user.messages)
+    @JoinColumn({ name: 'senderId' })
+    user: User;
+
+    @Column()
+    senderId: string;
+
     @CreateDateColumn()
     createdAt: Date;
 
     @UpdateDateColumn()
     updatedAt: Date;
+
+    @Column('simple-array', { nullable: true })
+    readBy: string[];
 }

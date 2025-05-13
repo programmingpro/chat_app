@@ -1,8 +1,8 @@
 import React, { useState, useContext } from 'react';
-import { 
-  Box, 
-  Typography, 
-  IconButton, 
+import {
+  Box,
+  Typography,
+  IconButton,
   Avatar,
   CssBaseline,
   TextField,
@@ -14,7 +14,6 @@ import {
   Badge,
   styled
 } from '@mui/material';
-import NotificationsIcon from '@mui/icons-material/Notifications';
 import SearchIcon from '@mui/icons-material/Search';
 import { ThemeContext } from './ThemeContext';
 import Background from '../components/Background/Background';
@@ -28,134 +27,15 @@ const SvgIcon = styled('svg')({
   strokeLinejoin: 'round',
 });
 
-const NotificationBox = styled(Box)(({ isDarkMode }) => ({
-  backgroundColor: isDarkMode ? '#1F2937' : '#FFFFFF',
-  borderRadius: 12,
-  boxShadow: '0px 8px 16px rgba(0, 0, 0, 0.1)',
-  width: 400,
-  paddingTop: 12,
-  paddingBottom: 12,
-  overflow: 'hidden',
-}));
-
-const Notification = ({ title, message, time, isDarkMode }) => (
-  <Box
-    sx={{
-      display: 'flex',
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      padding: '6px 16px',
-      backgroundColor: isDarkMode ? '#1F2937' : '#FFFFFF',
-      '&:hover': {
-        backgroundColor: isDarkMode ? '#374151' : '#F9FAFB'
-      }
-    }}
-  >
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      <Typography
-        sx={{
-          color: isDarkMode ? '#F9FAFB' : 'rgba(31, 41, 55, 1)',
-          fontSize: '14px',
-          fontWeight: 700,
-        }}
-      >
-        {title}
-      </Typography>
-      <Typography
-        sx={{
-          color: isDarkMode ? '#D1D5DB' : 'rgba(75, 85, 99, 1)',
-          fontSize: '12px',
-        }}
-      >
-        {message}
-      </Typography>
-    </Box>
-    <Typography sx={{ 
-      color: isDarkMode ? '#9CA3AF' : 'rgba(155, 163, 175, 1)', 
-      fontSize: '12px' 
-    }}>
-      {time}
-    </Typography>
-  </Box>
-);
-
-const NotificationList = ({ isDarkMode }) => {
-  const notifications = [
-    {
-      id: 1,
-      title: "Приглашение в чат",
-      message: "Вас приглашают в новый групповой чат «Ремесленный град»",
-      time: "15:04"
-    },
-    {
-      id: 2,
-      title: "Смена прав администратора",
-      message: "Вы назначены администратором чата «Тайный совет». Управляйте мудро!",
-      time: "14:10"
-    },
-    {
-      id: 3,
-      title: "Заголовок уведомления",
-      message: "Совещание в чате «Беседы у очага» завершено. Протокол доступен для скачивания.",
-      time: "14:00"
-    },
-    {
-      id: 4,
-      title: "Сбои подключения",
-      message: "Были замечены временные перебои в работе чата «Славянские мемы». Сейчас всё стабильно.",
-      time: "12:00"
-    }
-  ];  
-
-  return (
-    <NotificationBox isDarkMode={isDarkMode}>
-      {notifications.map((notification, index) => (
-        <React.Fragment key={notification.id}>
-          <Notification 
-            title={notification.title}
-            message={notification.message}
-            time={notification.time}
-            isDarkMode={isDarkMode}
-          />
-          {index < notifications.length - 1 && (
-            <Divider sx={{ 
-              backgroundColor: isDarkMode ? '#374151' : 'rgba(209, 213, 219, 1)' 
-            }} />
-          )}
-        </React.Fragment>
-      ))}
-    </NotificationBox>
-  );
-};
 
 const ChatList = () => {
   const { isDarkMode } = useContext(ThemeContext);
-  const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(3);
   const navigate = useNavigate();
-
-  const toggleNotifications = () => {
-    setShowNotifications(!showNotifications);
-    if (!showNotifications && unreadCount > 0) {
-      setUnreadCount(0);
-    }
-  };
 
   const handleNewChatClick = () => {
     navigate('/create-chat'); // Переход на страницу создания чата
   };
-
-  const chats = [
-    {
-      id: 1,
-      name: 'Алексей Петров',
-      lastMessage: 'Привет, как дела? Документы уже готовы к отправке...',
-      time: '12:30',
-      unread: 2,
-      avatar: 'AP'
-    },    
-  ];
 
   return (
     <>
@@ -222,46 +102,6 @@ const ChatList = () => {
               </Typography>
 
               <Box display="flex" alignItems="center" gap={1} ml="auto" position="relative">
-                <IconButton onClick={toggleNotifications}>
-                  <Badge 
-                    badgeContent={unreadCount} 
-                    color="error"
-                    sx={{
-                      '& .MuiBadge-badge': {
-                        right: -4,
-                        top: 4,
-                        backgroundColor: '#EF4444',
-                        color: 'white'
-                      }
-                    }}
-                  >
-                    <NotificationsIcon 
-                      sx={{ 
-                        color: 'transparent',
-                        stroke: isDarkMode ? '#F9FAFB' : 'black',
-                        strokeWidth: 1.5,
-                        '& path': {
-                          fill: 'transparent',
-                          stroke: isDarkMode ? '#F9FAFB' : 'black',
-                          strokeWidth: 1.5
-                        }
-                      }} 
-                    />
-                  </Badge>
-                </IconButton>
-
-                {showNotifications && (
-                  <Box
-                    sx={{
-                      position: 'absolute',
-                      right: 0,
-                      top: '56px',
-                      zIndex: 10,
-                    }}
-                  >
-                    <NotificationList isDarkMode={isDarkMode} />
-                  </Box>
-                )}
 
                 <IconButton>
                   <Avatar
@@ -340,8 +180,8 @@ const ChatList = () => {
                   }}
                 >
                   <ListItemAvatar>
-                    <Avatar 
-                      sx={{ 
+                    <Avatar
+                      sx={{
                         bgcolor: isDarkMode ? '#3B82F6' : '#2563EB',
                         color: 'white'
                       }}
@@ -385,8 +225,8 @@ const ChatList = () => {
                           {chat.lastMessage}
                         </Typography>
                         {chat.unread > 0 && (
-                          <Badge 
-                            badgeContent={chat.unread} 
+                          <Badge
+                            badgeContent={chat.unread}
                             color="primary"
                             sx={{
                               '& .MuiBadge-badge': {
