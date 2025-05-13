@@ -96,7 +96,7 @@ const Notification = ({ title, message, time, isDarkMode }) => (
   </Box>
 );
 
-const BACKEND_URL = 'http://localhost:3000';
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
 const SearchResultsPopup = ({ results, isDarkMode, onClose, onChatClick, isLoading }) => {
   return (
@@ -211,7 +211,7 @@ const SearchResultsPopup = ({ results, isDarkMode, onClose, onChatClick, isLoadi
                       mr: 1
                     }}>
                       <Image
-                        src={`${BACKEND_URL}${user.avatarUrl}`}
+                        src={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}${user.avatarUrl}`}
                         alt={`${user.firstName} ${user.lastName}`}
                         fill
                         style={{
@@ -1065,7 +1065,7 @@ const ChatList = () => {
                       overflow: 'hidden'
                     }}>
                       <Image
-                        src={`http://localhost:3000${userData.avatarUrl}`}
+                        src={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}${userData.avatarUrl}`}
                         alt={`${userData.firstName} ${userData.lastName}`}
                         fill
                         style={{
@@ -1215,7 +1215,7 @@ const ChatList = () => {
                           mr: 2
                         }}>
                           <Image
-                            src={`${BACKEND_URL}${chat.avatarUrl}`}
+                            src={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}${chat.avatarUrl}`}
                             alt={chat.name}
                             fill
                             style={{
@@ -1236,7 +1236,7 @@ const ChatList = () => {
                               src={
                                 chat.chatType === 'private'
                                     ? chatParticipants[chat.id]?.find(p => p.user.id !== userData?.id)?.user.avatarUrl
-                                      ? `${BACKEND_URL}${chatParticipants[chat.id].find(p => p.user.id !== userData?.id).user.avatarUrl}`
+                                      ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}${chatParticipants[chat.id].find(p => p.user.id !== userData?.id).user.avatarUrl}`
                                       : undefined
                                     : undefined
                               }
@@ -1566,7 +1566,7 @@ const ChatList = () => {
                       overflow: 'hidden'
                     }}>
                       <Image
-                        src={`${BACKEND_URL}${participant.user.avatarUrl}`}
+                        src={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}${participant.user.avatarUrl}`}
                         alt={`${participant.user.firstName} ${participant.user.lastName}`}
                         fill
                         style={{
@@ -1706,7 +1706,7 @@ const ChatList = () => {
                           overflow: 'hidden'
                         }}>
                           <Image
-                            src={`${BACKEND_URL}${user.avatarUrl}`}
+                            src={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}${user.avatarUrl}`}
                             alt={`${user.firstName} ${user.lastName}`}
                             fill
                             style={{

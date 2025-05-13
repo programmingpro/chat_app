@@ -62,6 +62,8 @@ const backgroundShapes = {
   },
 };
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+
 const ProfilePage = () => {
   const router = useRouter();
   const { isDarkMode } = useContext(ThemeContext);
@@ -303,7 +305,7 @@ const ProfilePage = () => {
                   border: '1px solid transparent'
                 }}>
                   <Image
-                    src={`http://localhost:3000${userData.avatarUrl}`}
+                    src={`${API_URL}${userData.avatarUrl}`}
                     alt="User avatar"
                     fill
                     style={{

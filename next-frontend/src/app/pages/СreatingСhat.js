@@ -56,6 +56,8 @@ const InputContainer = styled(Box)({
   marginBottom: '24px',
 });
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+
 const СreatingСhat = () => {
   const { isDarkMode } = useContext(ThemeContext);
   const router = useRouter();
@@ -115,7 +117,7 @@ const СreatingСhat = () => {
       setLoading(true);
       setError(null);
       try {
-        const response = await fetch(`http://localhost:3000/users/search?query=${encodeURIComponent(searchQuery)}`, {
+        const response = await fetch(`${API_URL}/users/search?query=${encodeURIComponent(searchQuery)}`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
@@ -214,7 +216,7 @@ const СreatingСhat = () => {
 
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:3000/chats', {
+      const response = await fetch(`${API_URL}/chats`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -323,7 +325,7 @@ const СreatingСhat = () => {
           <Box sx={{ display: 'flex', gap: '12px' }}>
             <IconButton onClick={handleProfileClick}>
               <Avatar
-                src={userData?.avatarUrl ? `http://localhost:3000${userData.avatarUrl}` : undefined}
+                src={userData?.avatarUrl ? `${API_URL}${userData.avatarUrl}` : undefined}
                 sx={{
                   width: 40,
                   height: 40,
@@ -456,7 +458,7 @@ const СreatingСhat = () => {
                       <li key={key} {...otherProps}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <Avatar
-                            src={option.avatarUrl ? `http://localhost:3000${option.avatarUrl}` : undefined}
+                            src={option.avatarUrl ? `${API_URL}${option.avatarUrl}` : undefined}
                             sx={{
                               width: 32,
                               height: 32,
@@ -538,7 +540,7 @@ const СreatingСhat = () => {
                 >
                   <ListItemAvatar>
                     <Avatar
-                      src={user.avatarUrl ? `http://localhost:3000${user.avatarUrl}` : undefined}
+                      src={user.avatarUrl ? `${API_URL}${user.avatarUrl}` : undefined}
                       sx={{
                         bgcolor: isDarkMode ? '#374151' : '#E5E7EB',
                         color: isDarkMode ? '#E5E7EB' : '#111827',

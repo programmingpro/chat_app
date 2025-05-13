@@ -21,6 +21,8 @@ import Background from '../components/Background/Background';
 import { authService } from '../services/api';
 import Image from 'next/image';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+
 const UserSettings = () => {
   const router = useRouter();
   const { isDarkMode, toggleTheme } = useContext(ThemeContext);
@@ -249,7 +251,7 @@ const UserSettings = () => {
                   overflow: 'hidden'
                 }}>
                   <Image
-                    src={`http://localhost:3000${userData.avatarUrl}`}
+                    src={`${API_URL}${userData.avatarUrl}`}
                     alt={`${userData.firstName} ${userData.lastName}`}
                     fill
                     style={{
