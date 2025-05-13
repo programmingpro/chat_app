@@ -9,7 +9,6 @@ export class Initial1743027468322 implements MigrationInterface {
             CREATE TYPE "public"."chats_chattype_enum" AS ENUM (
                 'private',
                 'group',
-                'channel'
             )
         `);
 

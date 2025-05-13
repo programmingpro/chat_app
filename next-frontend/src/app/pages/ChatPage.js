@@ -159,10 +159,11 @@ const ChatPage = ({ chatId }) => {
     }
   };
 
+  // Добавляем загрузку профиля
   useEffect(() => {
     const fetchProfile = async () => {
       if (!checkAuth()) return;
-
+      
       try {
         const token = localStorage.getItem('token');
         if (!token) {
@@ -187,6 +188,7 @@ const ChatPage = ({ chatId }) => {
         setProfile(data);
       } catch (error) {
         console.error('Error fetching profile:', error);
+        setError(error.message);
         if (error.message === 'Not authenticated') {
           router.push('/login');
         }
@@ -706,7 +708,7 @@ const ChatPage = ({ chatId }) => {
     }
   };
 
-  if (loading) {
+  if (loading || !profile) {
     return (
       <Box sx={{ 
         display: 'flex', 
@@ -808,11 +810,6 @@ const ChatPage = ({ chatId }) => {
             width: 'auto',
             alignItems: 'center'
           }}>
-            <IconButton>
-              <Badge badgeContent={2} color="error">
-                <NotificationsIcon sx={{ color: isDarkMode ? '#E5E7EB' : '#000000' }} />
-              </Badge>
-            </IconButton>
             <IconButton 
               onClick={() => router.push('/profile')}
               sx={{ cursor: 'pointer' }}
@@ -856,7 +853,7 @@ const ChatPage = ({ chatId }) => {
           border: isDarkMode ? '1px solid #374151' : 'none',
           position: 'relative',
           overflow: 'hidden'
-        }}>          
+        }}>
           <Box sx={{
             display: 'flex',
             alignItems: 'center',
@@ -865,37 +862,81 @@ const ChatPage = ({ chatId }) => {
             bgcolor: isDarkMode ? '#0F1827' : '#FFFFFF',
             width: '100%'
           }}>
-            {chat.avatarUrl ? (
-              <Box sx={{
-                width: 40,
-                height: 40,
-                position: 'relative',
-                borderRadius: '50%',
-                overflow: 'hidden',
-                mr: 2
-              }}>
-                <Image
-                  src={`${API_URL}${chat.avatarUrl}`}
-                  alt={chat.name}
-                  fill
-                  style={{
-                    objectFit: 'cover',
-                  }}
-                  unoptimized
-                />
-              </Box>
+            {chat.chatType === 'group' ? (
+                chat.avatarUrl ? (
+                    <Box sx={{
+                      width: 40,
+                      height: 40,
+                      position: 'relative',
+                      borderRadius: '50%',
+                      overflow: 'hidden',
+                      mr: 2
+                    }}>
+                      <Image
+                          src={`${API_URL}${chat.avatarUrl}`}
+                          alt={chat.name}
+                          fill
+                          style={{
+                            objectFit: 'cover',
+                          }}
+                          unoptimized
+                      />
+                    </Box>
+                ) : (
+                    <Avatar
+                        sx={{
+                          width: 40,
+                          height: 40,
+                          mr: 2,
+                          bgcolor: isDarkMode ? '#3B82F6' : '#2563EB',
+                          color: '#FFFFFF'
+                        }}
+                    >
+                      {chat.name?.[0]}
+                    </Avatar>
+                )
             ) : (
-            <Avatar 
-              sx={{ 
-                  width: 40, 
-                  height: 40, 
-                mr: 2,
-                  bgcolor: isDarkMode ? '#3B82F6' : '#2563EB',
-                  color: '#FFFFFF'
-                }}
-              >
-                {chat.name?.[0]}
-              </Avatar>
+                chat.participants.find(p => p.user.id !== profile?.id)?.user.avatarUrl ? (
+                    <Box sx={{
+                      width: 40,
+                      height: 40,
+                      position: 'relative',
+                      borderRadius: '50%',
+                      overflow: 'hidden',
+                      mr: 2
+                    }}>
+                      <Image
+                          src={`${API_URL}${chat.participants.find(p => p.user.id !== profile.id).user.avatarUrl}`}
+                          alt={chat.participants.find(p => p.user.id !== profile.id).user.firstName}
+                          fill
+                          style={{
+                            objectFit: 'cover',
+                          }}
+                          unoptimized
+                      />
+                    </Box>
+                ) : (
+                    <Avatar
+                        sx={{
+                          width: 40,
+                          height: 40,
+                          mr: 2,
+                          bgcolor: chat.chatType === 'private' ? 'transparent' : isDarkMode ? '#3B82F6' : '#2563EB',
+                          color: chat.chatType === 'private' ? 'inherit' : '#FFFFFF'
+                        }}
+                        src={
+                          chat.chatType === 'private' && chat.participants?.length > 0
+                            ? chat.participants.find(p => p.user?.id !== profile?.id)?.user?.avatarUrl
+                              ? `${API_URL}${chat.participants.find(p => p.user?.id !== profile?.id).user.avatarUrl}`
+                              : undefined
+                            : undefined
+                        }
+                    >
+                      {chat.chatType === 'private' && chat.participants?.length > 0
+                        ? chat.participants.find(p => p.user?.id !== profile?.id)?.user?.firstName?.[0]
+                        : chat.name?.[0]}
+                    </Avatar>
+                )
             )}
             <Box sx={{ flexGrow: 1 }}>
               <Typography sx={{
@@ -912,22 +953,22 @@ const ChatPage = ({ chatId }) => {
                 flexGrow: 1,
                 marginBottom: '4px'
               }}>
-                {chat.name}
+                {chat.chatType === 'group' ? chat.name : chat.participants.find(p => p.user.id !== profile.id).user.firstName + " " + chat.participants.find(p => p.user.id !== profile.id).user.lastName }
               </Typography>
               <Typography sx={{
                 fontSize: 14,
                 color: isDarkMode ? '#9CA3AF' : '#6B7280',
                 lineHeight: '20px'
               }}>
-                {chat.type === 'group' ? 'Групповой чат' : 'Личный чат'}
+                {chat.chatType === 'group' ? 'Групповой чат' : 'Личный чат'}
               </Typography>
             </Box>
             <IconButton onClick={handleMenuClick}>
-              <MoreVertIcon sx={{ color: isDarkMode ? '#E5E7EB' : '#6B7280' }} />
+              <MoreVertIcon sx={{ color: isDarkMode ? '#9CA3AF' : '#6B7280' }} />
             </IconButton>
           </Box>
 
-          <Box sx={{ 
+          <Box sx={{
             flex: 1,
             padding: '24px',
             overflowY: 'auto',
@@ -938,7 +979,7 @@ const ChatPage = ({ chatId }) => {
             {messages.map((msg) => (
               <Box
                 key={msg.id}
-                sx={{ 
+                sx={{
                   display: 'flex',
                   alignItems: 'flex-start',
                   gap: '12px',
@@ -966,9 +1007,9 @@ const ChatPage = ({ chatId }) => {
                       />
                     </Box>
                   ) : (
-                    <Avatar 
-                      sx={{ 
-                        width: 40, 
+                    <Avatar
+                      sx={{
+                        width: 40,
                         height: 40,
                         bgcolor: isDarkMode ? '#3B82F6' : '#2563EB',
                         color: '#FFFFFF',
@@ -999,9 +1040,9 @@ const ChatPage = ({ chatId }) => {
                       />
                     </Box>
                   ) : (
-                    <Avatar 
-                      sx={{ 
-                        width: 40, 
+                    <Avatar
+                      sx={{
+                        width: 40,
                         height: 40,
                         bgcolor: isDarkMode ? '#3B82F6' : '#2563EB',
                         color: '#FFFFFF',
@@ -1017,7 +1058,7 @@ const ChatPage = ({ chatId }) => {
                     sx={{
                       display: 'inline-flex',
                       flexDirection: 'column',
-                      backgroundColor: msg.senderId === profile?.id 
+                      backgroundColor: msg.senderId === profile?.id
                         ? (isDarkMode ? '#064E3B' : '#F0FDF4')
                         : (isDarkMode ? '#1E3A8A' : '#EFF6FF'),
                       borderRadius: '12px',
@@ -1045,7 +1086,7 @@ const ChatPage = ({ chatId }) => {
                         marginBottom: '4px'
                       }}
                     >
-                      {msg.senderId === profile?.id 
+                      {msg.senderId === profile?.id
                         ? `${profile?.firstName} ${profile?.lastName}`
                         : `${msg.user?.firstName} ${msg.user?.lastName}`
                       }

@@ -16,10 +16,10 @@ async function bootstrap() {
     app.useGlobalPipes(new ValidationPipe({ transform: true }));
     app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
     app.enableCors({
-        origin: 'http://localhost:3001',
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-        allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
-        credentials: true
+        origin: '*',
+        methods: '*',
+        allowedHeaders: '*',
+        credentials: false
     });
   
     // Serve static files

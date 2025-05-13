@@ -96,55 +96,6 @@ const Notification = ({ title, message, time, isDarkMode }) => (
   </Box>
 );
 
-const NotificationList = ({ isDarkMode }) => {
-  const notifications = [
-    {
-      id: 1,
-      title: "Приглашение в чат",
-      message: "Вас приглашают в новый групповой чат «Ремесленный град»",
-      time: "15:04"
-    },
-    {
-      id: 2,
-      title: "Смена прав администратора",
-      message: "Вы назначены администратором чата «Тайный совет». Управляйте мудро!",
-      time: "14:10"
-    },
-    {
-      id: 3,
-      title: "Заголовок уведомления",
-      message: "Совещание в чате «Беседы у очага» завершено. Протокол доступен для скачивания.",
-      time: "14:00"
-    },
-    {
-      id: 4,
-      title: "Сбои подключения",
-      message: "Были замечены временные перебои в работе чата «Славянские мемы». Сейчас всё стабильно.",
-      time: "12:00"
-    }
-  ];  
-
-  return (
-    <NotificationBox isdarkmode={isDarkMode.toString()}>
-      {notifications.map((notification, index) => (
-        <React.Fragment key={notification.id}>
-          <Notification 
-            title={notification.title}
-            message={notification.message}
-            time={notification.time}
-            isDarkMode={isDarkMode}
-          />
-          {index < notifications.length - 1 && (
-            <Divider sx={{ 
-              backgroundColor: isDarkMode ? '#374151' : 'rgba(209, 213, 219, 1)' 
-            }} />
-          )}
-        </React.Fragment>
-      ))}
-    </NotificationBox>
-  );
-};
-
 const BACKEND_URL = 'http://localhost:3000';
 
 const SearchResultsPopup = ({ results, isDarkMode, onClose, onChatClick, isLoading }) => {
@@ -504,7 +455,6 @@ const SearchComponent = React.memo(({ isDarkMode, onChatClick }) => {
 
 const ChatList = () => {
   const { isDarkMode } = useContext(ThemeContext);
-  const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(3);
   const [userData, setUserData] = useState(null);
   const router = useRouter();
@@ -519,6 +469,7 @@ const ChatList = () => {
   const [isParticipantsDialogOpen, setIsParticipantsDialogOpen] = useState(false);
   const [availableUsers, setAvailableUsers] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
+  const [chatParticipants, setChatParticipants] = useState({});
 
   const checkAuth = () => {
     const token = localStorage.getItem('token');
@@ -610,12 +561,6 @@ const ChatList = () => {
     fetchUserData();
   }, [router]);
 
-  const toggleNotifications = () => {
-    setShowNotifications(!showNotifications);
-    if (!showNotifications && unreadCount > 0) {
-      setUnreadCount(0);
-    }
-  };
 
   const handleNewChatClick = () => {
     router.push('/create-chat');
@@ -981,7 +926,39 @@ const ChatList = () => {
     }
   };
 
-  if (loading) {
+  const fetchChatParticipants = async (chatId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${BACKEND_URL}/chats/${chatId}/participants`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch chat participants');
+      }
+
+      const participants = await response.json();
+      setChatParticipants(prev => ({
+        ...prev,
+        [chatId]: participants
+      }));
+    } catch (error) {
+      console.error('Error fetching chat participants:', error);
+    }
+  };
+
+  useEffect(() => {
+    // Получаем участников для каждого приватного чата
+    chats.forEach(chat => {
+      if (chat.chatType === 'private' && !chatParticipants[chat.id]) {
+        fetchChatParticipants(chat.id);
+      }
+    });
+  }, [chats]);
+
+  if (loading || !userData) {
     return (
       <Box sx={{ 
         display: 'flex', 
@@ -1077,46 +1054,6 @@ const ChatList = () => {
               </Typography>
 
               <Box display="flex" alignItems="center" gap={1} ml="auto" position="relative">
-                <IconButton onClick={toggleNotifications}>
-                  <Badge 
-                    badgeContent={unreadCount} 
-                    color="error"
-                    sx={{
-                      '& .MuiBadge-badge': {
-                        right: -4,
-                        top: 4,
-                        backgroundColor: '#EF4444',
-                        color: 'white'
-                      }
-                    }}
-                  >
-                    <NotificationsIcon 
-                      sx={{ 
-                        color: 'transparent',
-                        stroke: isDarkMode ? '#F9FAFB' : 'black',
-                        strokeWidth: 1.5,
-                        '& path': {
-                          fill: 'transparent',
-                          stroke: isDarkMode ? '#F9FAFB' : 'black',
-                          strokeWidth: 1.5
-                        }
-                      }} 
-                    />
-                  </Badge>
-                </IconButton>
-
-                {showNotifications && (
-                  <Box
-                    sx={{
-                      position: 'absolute',
-                      right: 0,
-                      top: '56px',
-                      zIndex: 10,
-                    }}
-                  >
-                    <NotificationList isDarkMode={isDarkMode} />
-                  </Box>
-                )}
 
                 <IconButton onClick={handleProfileClick}>
                   {userData?.avatarUrl ? (
@@ -1288,17 +1225,26 @@ const ChatList = () => {
                           />
                         </Box>
                       ) : (
-                        <Avatar 
-                          sx={{ 
-                            width: 40, 
-                            height: 40, 
-                            mr: 2,
-                            bgcolor: isDarkMode ? '#3B82F6' : '#2563EB',
-                            color: '#FFFFFF'
-                          }}
-                        >
-                          {chat.name?.[0]}
-                        </Avatar>
+                          <Avatar
+                              sx={{
+                                width: 40,
+                                height: 40,
+                                mr: 2,
+                                bgcolor: chat.chatType === 'private' ? 'transparent' : isDarkMode ? '#3B82F6' : '#2563EB',
+                                color: chat.chatType === 'private' ? 'inherit' : '#FFFFFF'
+                              }}
+                              src={
+                                chat.chatType === 'private'
+                                    ? chatParticipants[chat.id]?.find(p => p.user.id !== userData?.id)?.user.avatarUrl
+                                      ? `${BACKEND_URL}${chatParticipants[chat.id].find(p => p.user.id !== userData?.id).user.avatarUrl}`
+                                      : undefined
+                                    : undefined
+                              }
+                          >
+                            {chat.chatType === 'private'
+                                ? null
+                                : chat.name?.[0]}
+                          </Avatar>
                       )}
                       <Box sx={{ flexGrow: 1 }}>
                         <Typography sx={{
@@ -1315,7 +1261,8 @@ const ChatList = () => {
                           flexGrow: 1,
                           marginBottom: '4px'
                         }}>
-                          {chat.name}
+                          {chat.chatType === 'private'
+                              ? chatParticipants[chat.id]?.find(p => p.user.id !== userData?.id)?.user.firstName + " " + chatParticipants[chat.id]?.find(p => p.user.id !== userData?.id)?.user.lastName : chat.name}
                         </Typography>
                         {/* Последнее сообщение */}
                         <Typography sx={{

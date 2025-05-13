@@ -14,15 +14,22 @@ import {
   Autocomplete,
   CircularProgress,
   Snackbar,
-  Alert
+  Alert,
+  Chip,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemAvatar,
+  ListItemSecondaryAction
 } from '@mui/material';
-import NotificationsIcon from '@mui/icons-material/Notifications';
 import { styled } from '@mui/system';
 import { ThemeContext } from './ThemeContext';
 import { ArrowBack } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
 import Background from '../components/Background/Background';
 import { authService } from '../services/api';
+import DeleteIcon from '@mui/icons-material/Delete';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
 
 const Header = styled(Box)({
   display: 'flex',
@@ -34,10 +41,12 @@ const Header = styled(Box)({
 
 const PageContent = styled(Paper)({
   width: '780px',       
-  height: '348px',     
+  minHeight: '500px',
   padding: '24px',
   borderRadius: '12px',
   boxShadow: '0px 4px 16px rgba(0, 0, 0, 0.05)',
+  display: 'flex',
+  flexDirection: 'column',
 });
 
 const InputContainer = styled(Box)({
@@ -61,6 +70,9 @@ const СreatingСhat = () => {
   const [selectedRole, setSelectedRole] = useState('Администратор');
   const [participants, setParticipants] = useState([]);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [selectedUsers, setSelectedUsers] = useState([]);
+  const [tempSelectedUser, setTempSelectedUser] = useState(null);
+  const [tempSelectedRole, setTempSelectedRole] = useState('Пользователь');
 
   // Проверяем авторизацию при загрузке компонента
   const checkAuth = () => {
@@ -137,11 +149,64 @@ const СreatingСhat = () => {
     router.push('/chat-list'); 
   };
   
-  const handleCreateChat = async () => {
-    if (!selectedUser) {
+  const handleChatTypeChange = (e) => {
+    const newType = e.target.value;
+    setChatType(newType);
+    if (newType === 'Личный') {
+      setSelectedRole('Пользователь');
+      setChatName('');
+      // Очищаем список пользователей при смене на личный чат
+      setSelectedUsers([]);
+    }
+  };
+
+  const handleAddUser = () => {
+    if (!tempSelectedUser) {
       setSnackbar({
         open: true,
-        message: 'Пожалуйста, выберите участника',
+        message: 'Пожалуйста, выберите пользователя',
+        severity: 'error'
+      });
+      return;
+    }
+
+    // Проверяем, не добавлен ли уже этот пользователь
+    if (selectedUsers.some(user => user.id === tempSelectedUser.id)) {
+      setSnackbar({
+        open: true,
+        message: 'Этот пользователь уже добавлен в чат',
+        severity: 'error'
+      });
+      return;
+    }
+
+    // Для личного чата проверяем, что еще нет других пользователей
+    if (chatType === 'Личный' && selectedUsers.length > 0) {
+      setSnackbar({
+        open: true,
+        message: 'В личном чате может быть только один участник',
+        severity: 'error'
+      });
+      return;
+    }
+
+    setSelectedUsers([...selectedUsers, {
+      ...tempSelectedUser,
+      role: tempSelectedRole
+    }]);
+    setTempSelectedUser(null);
+    setTempSelectedRole('Пользователь');
+  };
+
+  const handleRemoveUser = (userId) => {
+    setSelectedUsers(selectedUsers.filter(user => user.id !== userId));
+  };
+
+  const handleCreateChat = async () => {
+    if (selectedUsers.length === 0) {
+      setSnackbar({
+        open: true,
+        message: 'Пожалуйста, добавьте хотя бы одного участника',
         severity: 'error'
       });
       return;
@@ -156,16 +221,16 @@ const СreatingСhat = () => {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
         body: JSON.stringify({
-          name: chatName,
-          chatType: chatType === 'Групповой' ? 'group' : 'private',
+          name: chatType === 'Личный' ? '' : chatName,
+          chatType: chatType === 'Личный' ? 'private' : 'group',
           participants: [
-            {
-              userId: selectedUser.id,
-              role: selectedRole === 'Администратор' ? 'admin' : 'member'
-            },
+            ...selectedUsers.map(user => ({
+              userId: user.id,
+              role: chatType === 'Личный' ? 'member' : (user.role === 'Администратор' ? 'admin' : 'member')
+            })),
             {
               userId: userData.id,
-              role: 'admin'
+              role: chatType === 'Личный' ? 'member' : 'admin'
             }
           ]
         })
@@ -256,11 +321,6 @@ const СreatingСhat = () => {
             Создание чата
           </Typography>
           <Box sx={{ display: 'flex', gap: '12px' }}>
-            <IconButton>
-              <Badge badgeContent={2} color="error">
-                <NotificationsIcon sx={{ color: isDarkMode ? '#E5E7EB' : '#111827' }} />
-              </Badge>
-            </IconButton>
             <IconButton onClick={handleProfileClick}>
               <Avatar
                 src={userData?.avatarUrl ? `http://localhost:3000${userData.avatarUrl}` : undefined}
@@ -282,6 +342,7 @@ const СreatingСhat = () => {
           sx={{
             backgroundColor: isDarkMode ? '#111827' : '#ffffff',
             border: isDarkMode ? '1px solid #374151' : 'none',
+            gap: '24px'
           }}
         >
           <InputContainer>
@@ -297,7 +358,7 @@ const СreatingСhat = () => {
                   fullWidth 
                   variant="outlined" 
                   value={chatType}
-                  onChange={(e) => setChatType(e.target.value)}
+                  onChange={handleChatTypeChange}
                   displayEmpty
                   sx={{
                     backgroundColor: isDarkMode ? '#1F2937' : '#FFFFFF',
@@ -310,65 +371,62 @@ const СreatingСhat = () => {
                     },
                   }}
                 >
-                  <MenuItem value="Групповой" sx={{ 
-                    backgroundColor: isDarkMode ? '#111827' : '#FFFFFF',
-                    color: isDarkMode ? '#F9FAFB' : '#111827',
-                    '&:hover': {
-                      backgroundColor: isDarkMode ? '#1F2937' : '#F3F4F6'
-                    }
-                  }}>
-                    Групповой
-                  </MenuItem>
+                  <MenuItem value="Групповой">Групповой</MenuItem>
+                  <MenuItem value="Личный">Личный</MenuItem>
                 </Select>
               </Box>
-              <Box flex={1}>
-                <Typography variant="body2" sx={{ color: isDarkMode ? '#9CA3AF' : '#6B7280' }}>
-                  Название
-                </Typography>
-                <TextField 
-                  fullWidth 
-                  variant="outlined" 
-                  value={chatName}
-                  onChange={(e) => setChatName(e.target.value)}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      color: isDarkMode ? '#F9FAFB' : '#111827',
-                      '& fieldset': {
-                        borderColor: isDarkMode ? '#374151' : '#E5E7EB',
+              {chatType !== 'Личный' && (
+                <Box flex={1}>
+                  <Typography variant="body2" sx={{ color: isDarkMode ? '#9CA3AF' : '#6B7280' }}>
+                    Название
+                  </Typography>
+                  <TextField 
+                    fullWidth 
+                    variant="outlined" 
+                    value={chatName}
+                    onChange={(e) => setChatName(e.target.value)}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        color: isDarkMode ? '#F9FAFB' : '#111827',
+                        '& fieldset': {
+                          borderColor: isDarkMode ? '#374151' : '#E5E7EB',
+                        },
+                        '&:hover fieldset': {
+                          borderColor: isDarkMode ? '#4B5563' : '#D1D5DB',
+                        },
                       },
-                      '&:hover fieldset': {
-                        borderColor: isDarkMode ? '#4B5563' : '#D1D5DB',
-                      },
-                    },
-                    backgroundColor: isDarkMode ? '#1F2937' : '#FFFFFF',
-                  }}
-                />
-              </Box>
+                      backgroundColor: isDarkMode ? '#1F2937' : '#FFFFFF',
+                    }}
+                  />
+                </Box>
+              )}
             </Box>
           </InputContainer>
 
           <InputContainer>
             <Typography variant="h6" sx={{ color: isDarkMode ? '#F9FAFB' : '#111827' }}>
-              Роли
+              Участники чата
             </Typography>
             <Box display="flex" gap="16px">
               <Box flex={1}>
                 <Typography variant="body2" sx={{ color: isDarkMode ? '#9CA3AF' : '#6B7280' }}>
-                  Участник
+                  {chatType === 'Личный' ? 'Выберите собеседника' : 'Добавить участника'}
                 </Typography>
                 <Autocomplete
-                  value={selectedUser}
-                  onChange={handleUserSelect}
+                  value={tempSelectedUser}
+                  onChange={(event, newValue) => setTempSelectedUser(newValue)}
                   inputValue={searchQuery}
                   onInputChange={(event, newValue) => setSearchQuery(newValue)}
                   options={users || []}
                   getOptionLabel={(option) => option ? `${option.firstName || ''} ${option.lastName || ''} (${option.username || ''})` : ''}
                   loading={loading}
-                  noOptionsText={error || "No users found"}
+                  noOptionsText={error || "Пользователи не найдены"}
+                  disabled={chatType === 'Личный' && selectedUsers.length > 0}
                   renderInput={(params) => (
                     <TextField
                       {...params}
                       variant="outlined"
+                      placeholder={chatType === 'Личный' && selectedUsers.length > 0 ? 'Можно выбрать только одного собеседника' : ''}
                       sx={{
                         '& .MuiOutlinedInput-root': {
                           color: isDarkMode ? '#F9FAFB' : '#111827',
@@ -421,98 +479,139 @@ const СreatingСhat = () => {
                       </li>
                     );
                   }}
-                  sx={{
-                    '& .MuiAutocomplete-listbox': {
-                      backgroundColor: isDarkMode ? '#1F2937' : '#FFFFFF',
-                      '& .MuiAutocomplete-option': {
-                        '&:hover': {
-                          backgroundColor: isDarkMode ? '#374151' : '#F3F4F6'
-                        }
-                      }
-                    }
-                  }}
                 />
               </Box>
-              <Box flex={1}>
-                <Typography variant="body2" sx={{ color: isDarkMode ? '#9CA3AF' : '#6B7280' }}>
-                  Роль
-                </Typography>
-                <Select 
-                  fullWidth 
-                  variant="outlined" 
-                  value={selectedRole}
-                  onChange={(e) => setSelectedRole(e.target.value)}
-                  displayEmpty
-                  sx={{
-                    backgroundColor: isDarkMode ? '#1F2937' : '#FFFFFF',
-                    color: isDarkMode ? '#F9FAFB' : '#111827',
-                    '& .MuiOutlinedInput-notchedOutline': {
-                      borderColor: isDarkMode ? '#374151' : '#E5E7EB',
-                    },
-                    '&:hover .MuiOutlinedInput-notchedOutline': {
-                      borderColor: isDarkMode ? '#4B5563' : '#D1D5DB',
-                    },
-                  }}
-                >
-                  <MenuItem value="Администратор" sx={{ 
-                    backgroundColor: isDarkMode ? '#111827' : '#FFFFFF',
-                    color: isDarkMode ? '#F9FAFB' : '#111827',
-                    '&:hover': {
-                      backgroundColor: isDarkMode ? '#1F2937' : '#F3F4F6'
-                    }
-                  }}>
-                    Администратор
-                  </MenuItem>
-                  <MenuItem value="Пользователь" sx={{ 
-                    backgroundColor: isDarkMode ? '#111827' : '#FFFFFF',
-                    color: isDarkMode ? '#F9FAFB' : '#111827',
-                    '&:hover': {
-                      backgroundColor: isDarkMode ? '#1F2937' : '#F3F4F6'
-                    }
-                  }}>
-                    Пользователь
-                  </MenuItem>
-                </Select>
-              </Box>
-              <Button 
-                variant="outlined" 
-                color="primary"
-                onClick={() => {
-                  if (selectedUser) {
-                    setParticipants([...participants, { user: selectedUser, role: selectedRole }]);
-                    setSelectedUser(null);
-                    setSearchQuery('');
-                  }
-                }}
+              {chatType !== 'Личный' && (
+                <Box flex={1}>
+                  <Typography variant="body2" sx={{ color: isDarkMode ? '#9CA3AF' : '#6B7280' }}>
+                    Роль
+                  </Typography>
+                  <Select 
+                    fullWidth 
+                    variant="outlined" 
+                    value={tempSelectedRole}
+                    onChange={(e) => setTempSelectedRole(e.target.value)}
+                    displayEmpty
+                    sx={{
+                      backgroundColor: isDarkMode ? '#1F2937' : '#FFFFFF',
+                      color: isDarkMode ? '#F9FAFB' : '#111827',
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: isDarkMode ? '#374151' : '#E5E7EB',
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: isDarkMode ? '#4B5563' : '#D1D5DB',
+                      },
+                    }}
+                  >
+                    <MenuItem value="Администратор">Администратор</MenuItem>
+                    <MenuItem value="Пользователь">Пользователь</MenuItem>
+                  </Select>
+                </Box>
+              )}
+              <Button
+                variant="contained"
+                startIcon={<PersonAddIcon />}
+                onClick={handleAddUser}
+                disabled={chatType === 'Личный' && selectedUsers.length > 0}
                 sx={{
-                  alignSelf: 'flex-end',
-                  color: isDarkMode ? '#3B82F6' : '#2563EB',
-                  borderColor: isDarkMode ? '#3B82F6' : '#2563EB',
+                  mt: 'auto',
+                  backgroundColor: '#3B82F6',
+                  color: '#FFFFFF',
                   '&:hover': {
-                    borderColor: isDarkMode ? '#2563EB' : '#1D4ED8',
+                    backgroundColor: '#2563EB',
                   }
                 }}
               >
-                Выдать роль
+                Добавить
               </Button>
             </Box>
+
+            <List sx={{ mt: 2, flex: 1, overflow: 'auto' }}>
+              {selectedUsers.map((user) => (
+                <ListItem
+                  key={user.id}
+                  sx={{
+                    backgroundColor: isDarkMode ? '#1F2937' : '#F3F4F6',
+                    borderRadius: '8px',
+                    mb: 1
+                  }}
+                >
+                  <ListItemAvatar>
+                    <Avatar
+                      src={user.avatarUrl ? `http://localhost:3000${user.avatarUrl}` : undefined}
+                      sx={{
+                        bgcolor: isDarkMode ? '#374151' : '#E5E7EB',
+                        color: isDarkMode ? '#E5E7EB' : '#111827',
+                      }}
+                    >
+                      {!user.avatarUrl ? `${user.firstName?.[0]}${user.lastName?.[0]}` : ''}
+                    </Avatar>
+                  </ListItemAvatar>
+                  <ListItemText
+                    primary={`${user.firstName} ${user.lastName}`}
+                    secondary={
+                      <Box 
+                        component="span"
+                        sx={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: 1,
+                          color: isDarkMode ? '#9CA3AF' : '#6B7280'
+                        }}
+                      >
+                        <span>{user.username}</span>
+                        {chatType !== 'Личный' && (
+                          <Box
+                            component="span"
+                            sx={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              backgroundColor: user.role === 'Администратор' ? '#3B82F6' : '#9CA3AF',
+                              color: '#FFFFFF',
+                              padding: '0 8px',
+                              borderRadius: '16px',
+                              fontSize: '0.75rem',
+                              height: '20px'
+                            }}
+                          >
+                            {user.role}
+                          </Box>
+                        )}
+                      </Box>
+                    }
+                  />
+                  <ListItemSecondaryAction>
+                    <IconButton
+                      edge="end"
+                      onClick={() => handleRemoveUser(user.id)}
+                      sx={{ color: isDarkMode ? '#E5E7EB' : '#111827' }}
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  </ListItemSecondaryAction>
+                </ListItem>
+              ))}
+            </List>
           </InputContainer>
 
-          <Button 
-            variant="contained" 
-            color="primary"
-            onClick={handleCreateChat}
-            disabled={loading}
-            sx={{
-              backgroundColor: '#3B82F6',
-              color: '#FFFFFF',
-              '&:hover': {
-                backgroundColor: '#2563EB',
-              }
-            }}
-          >
-            {loading ? <CircularProgress size={24} color="inherit" /> : 'Создать чат'}
-          </Button>
+          <Box sx={{ mt: 'auto' }}>
+            <Button 
+              variant="contained" 
+              color="primary"
+              onClick={handleCreateChat}
+              disabled={loading}
+              fullWidth
+              sx={{
+                backgroundColor: '#3B82F6',
+                color: '#FFFFFF',
+                '&:hover': {
+                  backgroundColor: '#2563EB',
+                }
+              }}
+            >
+              {loading ? <CircularProgress size={24} color="inherit" /> : 'Создать чат'}
+            </Button>
+          </Box>
         </PageContent>
       </Container> 
 
