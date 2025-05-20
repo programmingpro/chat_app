@@ -94,7 +94,7 @@ const ChatList = () => {
                   fontWeight: 'bold',
                   color: isDarkMode ? '#F9FAFB' : '#1F2938',
                   position: 'absolute',
-                  left: '7%',
+                  left: '12%',
                   transform: 'translateX(-50%)'
                 }}
               >

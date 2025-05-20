@@ -64,7 +64,7 @@ const Contact = () => {
             Email:
           </div>
           <div style={{ fontSize: '16px' }}>
-            info@cyap.ru
+            info@suar.ru
           </div>
         </div>
       </div>

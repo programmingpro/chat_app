@@ -14,7 +14,7 @@ import {
   Alert,
   CircularProgress
 } from '@mui/material';
-import { ArrowBack, Notifications } from '@mui/icons-material';
+import { ArrowBack } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
 import { ThemeContext } from '../pages/ThemeContext';
 import Background from '../components/Background/Background';
@@ -32,9 +32,6 @@ const UserSettings = () => {
   const [success, setSuccess] = useState(false);
   
   const [settings, setSettings] = useState({
-    twoFactorAuth: false,
-    pushNotifications: false,
-    notificationSound: false,
     darkTheme: false
   });
 
@@ -65,9 +62,6 @@ const UserSettings = () => {
         
         // Обновляем настройки из профиля, используя значения с сервера
         setSettings({
-          twoFactorAuth: response.twoFactorAuth ?? false,
-          pushNotifications: response.pushNotifications ?? false,
-          notificationSound: response.notificationSound ?? false,
           darkTheme: response.darkTheme ?? false
         });
       } catch (error) {
@@ -239,9 +233,6 @@ const UserSettings = () => {
                 right: 'calc((100% - 840px) / 2)', 
               }}
             >
-              <IconButton>
-                <Notifications sx={{ fontSize: 24, color: isDarkMode ? '#F9FAFB' : 'rgba(31, 41, 55, 1)' }} />
-              </IconButton>
               {userData?.avatarUrl ? (
                 <Box sx={{
                   width: 40,
@@ -362,61 +353,6 @@ const UserSettings = () => {
                     color: isDarkMode ? '#9CA3AF' : 'rgba(31, 41, 55, 1)', 
                   },
                 }}
-              />
-              <FormControlLabel
-                control={
-                  <Checkbox 
-                    checked={settings.twoFactorAuth}
-                    onChange={handleSettingChange('twoFactorAuth')}
-                    sx={{
-                      color: isDarkMode ? '#3B82F6' : 'primary', 
-                      '&.Mui-checked': {
-                        color: isDarkMode ? '#3B82F6' : 'primary', 
-                      },
-                    }}
-                  />
-                }
-                label="Двухфакторная аутентификация"
-                sx={{ color: isDarkMode ? '#F9FAFB' : 'rgba(31, 41, 55, 1)' }} 
-              />
-            </FormGroup>
-
-            {/* Раздел "Уведомления" */}
-            <Typography variant="h6" sx={{ mt: 4, mb: 2, color: isDarkMode ? '#F9FAFB' : 'rgba(31, 41, 55, 1)' }}> 
-              Уведомления
-            </Typography>
-            <FormGroup>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={settings.pushNotifications}
-                    onChange={handleSettingChange('pushNotifications')}
-                    sx={{
-                      color: isDarkMode ? '#3B82F6' : 'primary', 
-                      '&.Mui-checked': {
-                        color: isDarkMode ? '#3B82F6' : 'primary', 
-                      },
-                    }}
-                  />
-                }
-                label="Пуш-уведомления"
-                sx={{ color: isDarkMode ? '#F9FAFB' : 'rgba(31, 41, 55, 1)' }} 
-              />
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={settings.notificationSound}
-                    onChange={handleSettingChange('notificationSound')}
-                    sx={{
-                      color: isDarkMode ? '#3B82F6' : 'primary', 
-                      '&.Mui-checked': {
-                        color: isDarkMode ? '#3B82F6' : 'primary', 
-                      },
-                    }}
-                  />
-                }
-                label="Звук уведомлений"
-                sx={{ color: isDarkMode ? '#F9FAFB' : 'rgba(31, 41, 55, 1)' }} 
               />
             </FormGroup>
 

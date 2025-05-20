@@ -443,38 +443,6 @@ const RegistrationPage = () => {
                 >
                   {loading ? 'Регистрация...' : 'Зарегистрироваться'}
             </Button>
-
-            <Typography
-              variant="body2"
-              align="center"
-              sx={{
-                color: '#6B7180',
-                my: 2
-              }}
-            >
-                  Регистрация с помощью
-                </Typography>
-
-            <Grid container justifyContent="center" spacing={2}>
-              <Grid item>
-                <IconButton 
-                  aria-label="vk" 
-                  sx={{ color: 'rgba(0, 119, 255, 1)' }}
-                  disabled
-                >
-                  <img src="/assets/vk-icon.svg" alt="VK" style={{ width: 32, height: 32 }} />
-                  </IconButton>
-              </Grid>
-              <Grid item>
-                <IconButton 
-                  aria-label="gmail" 
-                  sx={{ color: 'rgba(220, 78, 65, 1)' }}
-                  disabled
-                >
-                  <img src="/assets/G-icon.svg" alt="gmail" style={{ width: 32, height: 32 }} />
-                  </IconButton>
-              </Grid>
-            </Grid>
           </form>
               </Box>
             </Box>

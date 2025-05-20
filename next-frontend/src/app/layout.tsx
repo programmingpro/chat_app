@@ -4,8 +4,8 @@ import { Providers } from "./providers";
 import AppLayout from "./components/AppLayout";
 
 export const metadata: Metadata = {
-  title: "Chat App",
-  description: "Real-time chat application",
+  title: "Суар",
+  description: "Платформа общения нового поколения",
 };
 
 export default function RootLayout({

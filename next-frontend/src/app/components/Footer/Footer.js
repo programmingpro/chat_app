@@ -46,7 +46,7 @@ const Footer = () => {
             Email:
           </div>
           <div style={{ alignSelf: 'stretch', fontSize: '16px', fontFamily: "'Inter', sans-serif", fontWeight: 400, lineHeight: '24px' }}>
-            info@cyap.ru
+            info@suar.ru
           </div>
         </div>
       </div>

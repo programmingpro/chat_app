@@ -35,6 +35,9 @@ import SendIcon from '@mui/icons-material/Send';
 import CloseIcon from '@mui/icons-material/Close';
 import DeleteIcon from '@mui/icons-material/Delete';
 import io from 'socket.io-client';
+import PersonIcon from '@mui/icons-material/Person';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import Autocomplete from '@mui/material/Autocomplete';
 
 const Header = styled(Box)({
   display: 'flex',
@@ -76,6 +79,67 @@ const UserAvatar = styled(Avatar)({
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
+const ParticipantItem = styled(ListItem)(({ theme }) => ({
+  backgroundColor: theme.palette.mode === 'dark' ? '#1F2937' : '#F3F4F6',
+  borderRadius: '12px',
+  padding: '12px 16px',
+  marginBottom: '8px',
+  transition: 'all 0.2s ease',
+  '&:hover': {
+    backgroundColor: theme.palette.mode === 'dark' ? '#374151' : '#E5E7EB',
+    transform: 'translateX(4px)',
+  }
+}));
+
+const RoleBadge = styled(Box, {
+  shouldForwardProp: (prop) => prop !== 'isAdmin'
+})(({ theme, isAdmin }) => ({
+  display: 'inline-flex',
+  alignItems: 'center',
+  backgroundColor: isAdmin ? '#3B82F6' : '#9CA3AF',
+  color: '#FFFFFF',
+  padding: '4px 12px',
+  borderRadius: '8px',
+  fontSize: '0.75rem',
+  fontWeight: 500,
+  transition: 'all 0.2s ease',
+  '&:hover': {
+    backgroundColor: isAdmin ? '#2563EB' : '#6B7280',
+  }
+}));
+
+const ActionButton = styled(Button)(({ theme }) => ({
+  borderRadius: '8px',
+  textTransform: 'none',
+  fontWeight: 500,
+  transition: 'all 0.2s ease',
+  '&:hover': {
+    transform: 'translateY(-1px)',
+  }
+}));
+
+const StyledTextField = styled(TextField)(({ theme }) => ({
+  '& .MuiOutlinedInput-root': {
+    backgroundColor: theme.palette.mode === 'dark' ? '#1F2937' : '#FFFFFF',
+    color: theme.palette.mode === 'dark' ? '#F9FAFB' : '#111827',
+    '& fieldset': {
+      borderColor: theme.palette.mode === 'dark' ? '#374151' : '#E5E7EB',
+    },
+    '&:hover fieldset': {
+      borderColor: theme.palette.mode === 'dark' ? '#4B5563' : '#D1D5DB',
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: '#3B82F6',
+    },
+  },
+  '& .MuiInputLabel-root': {
+    color: theme.palette.mode === 'dark' ? '#9CA3AF' : '#6B7280',
+  },
+  '& .MuiInputBase-input': {
+    color: theme.palette.mode === 'dark' ? '#F9FAFB' : '#111827',
+  },
+}));
+
 const ChatPage = ({ chatId }) => {
   const { isDarkMode } = useContext(ThemeContext);
   const router = useRouter();
@@ -98,6 +162,7 @@ const ChatPage = ({ chatId }) => {
   const [availableUsers, setAvailableUsers] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [socket, setSocket] = useState(null);
+  const [tempSelectedUser, setTempSelectedUser] = useState(null);
 
   // Проверяем авторизацию при загрузке компонента
   const checkAuth = () => {
@@ -708,6 +773,49 @@ const ChatPage = ({ chatId }) => {
     }
   };
 
+  const handleAddUser = async () => {
+    if (!tempSelectedUser) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/chats/${chat.id}/participants`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          participants: [{
+            userId: tempSelectedUser.id,
+            role: 'member'
+          }]
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to add participant');
+      }
+
+      // Обновляем данные чата после добавления участника
+      const updatedChatResponse = await fetch(`${API_URL}/chats/${chat.id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (updatedChatResponse.ok) {
+        const updatedChatData = await updatedChatResponse.json();
+        setChat(updatedChatData);
+      }
+
+      // Очищаем временный выбранный пользователь
+      setTempSelectedUser(null);
+      setSearchQuery('');
+    } catch (error) {
+      console.error('Error adding participant:', error);
+    }
+  };
+
   if (loading || !profile) {
     return (
       <Box sx={{ 
@@ -1226,36 +1334,46 @@ const ChatPage = ({ chatId }) => {
           PaperProps={{
             sx: {
               backgroundColor: isDarkMode ? '#1F2937' : '#FFFFFF',
-              borderRadius: '12px',
+              borderRadius: '16px',
+              boxShadow: '0px 8px 24px rgba(0, 0, 0, 0.12)',
             }
           }}
         >
-          <DialogTitle sx={{ color: isDarkMode ? '#F9FAFB' : '#1F2937' }}>
+          <DialogTitle 
+            sx={{ 
+              color: isDarkMode ? '#F9FAFB' : '#1F2937',
+              fontSize: '1.5rem',
+              fontWeight: 600,
+              padding: '24px 24px 16px',
+              borderBottom: `1px solid ${isDarkMode ? '#374151' : '#E5E7EB'}`
+            }}
+          >
             Управление участниками
           </DialogTitle>
-          <DialogContent>
+          <DialogContent sx={{ padding: '24px' }}>
             {/* Текущие участники */}
             <Typography
               sx={{
                 color: isDarkMode ? '#9CA3AF' : '#6B7280',
-                fontSize: '14px',
+                fontSize: '0.875rem',
                 fontWeight: 600,
                 mb: 2,
-                mt: 1
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1
               }}
             >
-              Текущие участники
             </Typography>
-            <List>
+            <List sx={{ mb: 3 }}>
               {chat?.participants?.map((participant) => (
-                <ListItem 
+                <ParticipantItem 
                   key={participant.user.id}
                   secondaryAction={
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       {participant.user.id !== profile?.id && (
                         <>
                           {chat?.participants?.find(p => p.user.id === profile?.id)?.role === 'admin' && (
-                            <Button
+                            <ActionButton
                               size="small"
                               variant="outlined"
                               onClick={() => handleUpdateParticipantRole(
@@ -1267,17 +1385,24 @@ const ChatPage = ({ chatId }) => {
                                 borderColor: isDarkMode ? '#374151' : '#D1D5DB',
                                 '&:hover': {
                                   borderColor: isDarkMode ? '#4B5563' : '#9CA3AF',
+                                  backgroundColor: isDarkMode ? '#374151' : '#F3F4F6',
                                 },
-                                mr: 1
                               }}
                             >
                               {participant.role === 'admin' ? 'Снять админа' : 'Сделать админом'}
-                            </Button>
+                            </ActionButton>
                           )}
                           <IconButton 
                             edge="end" 
                             onClick={() => handleRemoveParticipant(participant.user.id)}
-                            sx={{ color: '#EF4444' }}
+                            sx={{ 
+                              color: '#EF4444',
+                              transition: 'all 0.2s ease',
+                              '&:hover': {
+                                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                                transform: 'scale(1.1)',
+                              }
+                            }}
                           >
                             <DeleteIcon />
                           </IconButton>
@@ -1287,202 +1412,166 @@ const ChatPage = ({ chatId }) => {
                   }
                 >
                   <ListItemAvatar>
-                    {participant.user.avatarUrl ? (
-                      <Box sx={{
+                    <Avatar
+                      src={participant.user.avatarUrl ? `${API_URL}${participant.user.avatarUrl}` : undefined}
+                      sx={{
                         width: 40,
                         height: 40,
-                        position: 'relative',
-                        borderRadius: '50%',
-                        overflow: 'hidden'
-                      }}>
-                        <Image
-                          src={`${API_URL}${participant.user.avatarUrl}`}
-                          alt={`${participant.user.firstName} ${participant.user.lastName}`}
-                          fill
-                          style={{
-                            objectFit: 'cover',
-                          }}
-                          unoptimized
-                        />
-                      </Box>
-                    ) : (
-                      <Avatar
+                        bgcolor: isDarkMode ? '#374151' : '#E5E7EB',
+                        color: isDarkMode ? '#E5E7EB' : '#111827',
+                        transition: 'transform 0.2s ease',
+                        '&:hover': {
+                          transform: 'scale(1.1)',
+                        }
+                      }}
+                    >
+                      {!participant.user.avatarUrl ? `${participant.user.firstName?.[0]}${participant.user.lastName?.[0]}` : ''}
+                    </Avatar>
+                  </ListItemAvatar>
+                  <Box sx={{ flex: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                      <Typography
                         sx={{
-                          width: 40,
-                          height: 40,
-                          bgcolor: isDarkMode ? '#3B82F6' : '#2563EB',
+                          color: isDarkMode ? '#F9FAFB' : '#1F2937',
+                          fontWeight: 500,
                         }}
                       >
-                        {participant.user.firstName?.[0]}{participant.user.lastName?.[0]}
-                      </Avatar>
-                    )}
-                  </ListItemAvatar>
-                  <ListItemText 
-                    primary={`${participant.user.firstName} ${participant.user.lastName}`}
-                    secondary={
+                        {`${participant.user.firstName} ${participant.user.lastName}`}
+                      </Typography>
+                      {participant.user.id === profile?.id && (
+                        <Typography
+                          component="span"
+                          sx={{
+                            fontSize: '0.75rem',
+                            color: isDarkMode ? '#9CA3AF' : '#6B7280',
+                            fontStyle: 'italic'
+                          }}
+                        >
+                          (Вы)
+                        </Typography>
+                      )}
+                    </Box>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1
+                      }}
+                    >
+                      <RoleBadge isAdmin={participant.role === 'admin'}>
+                        {participant.role === 'admin' ? 'Администратор' : 'Участник'}
+                      </RoleBadge>
                       <Typography
                         component="span"
                         sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 1,
                           color: isDarkMode ? '#9CA3AF' : '#6B7280',
-                          fontSize: '14px'
+                          fontSize: '0.75rem'
                         }}
                       >
-                        <span>
-                          {participant.role === 'admin' ? 'Администратор' : 'Участник'}
-                        </span>
-                        {participant.user.id === profile?.id && (
-                          <span style={{ fontSize: '12px', fontStyle: 'italic' }}>
-                            (Вы)
-                          </span>
-                        )}
+                        {participant.user.username}
                       </Typography>
-                    }
-                    sx={{
-                      '& .MuiListItemText-primary': {
-                        color: isDarkMode ? '#F9FAFB' : '#1F2937',
-                      },
-                      '& .MuiListItemText-secondary': {
-                        color: isDarkMode ? '#9CA3AF' : '#6B7280',
-                      }
-                    }}
-                  />
-                </ListItem>
+                    </Box>
+                  </Box>
+                </ParticipantItem>
               ))}
             </List>
 
             {/* Поиск и добавление новых участников */}
-            <Box sx={{ mt: 3 }}>
-              <Typography
+            <Typography
+              sx={{
+                color: isDarkMode ? '#9CA3AF' : '#6B7280',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                mb: 2,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1
+              }}
+            >
+              <PersonAddIcon fontSize="small" />
+              Добавить участников
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+              <Autocomplete
+                value={tempSelectedUser}
+                onChange={(event, newValue) => setTempSelectedUser(newValue)}
+                inputValue={searchQuery}
+                onInputChange={(event, newValue) => setSearchQuery(newValue)}
+                options={availableUsers || []}
+                getOptionLabel={(option) => option ? `${option.firstName || ''} ${option.lastName || ''} (${option.username || ''})` : ''}
+                loading={loading}
+                noOptionsText={error || "Пользователи не найдены"}
+                renderInput={(params) => (
+                  <StyledTextField
+                    {...params}
+                    variant="outlined"
+                    placeholder="Поиск пользователей..."
+                    fullWidth
+                    InputProps={{
+                      ...params.InputProps,
+                      endAdornment: (
+                        <>
+                          {loading ? <CircularProgress color="inherit" size={20} /> : null}
+                          {params.InputProps.endAdornment}
+                        </>
+                      ),
+                    }}
+                  />
+                )}
                 sx={{
-                  color: isDarkMode ? '#9CA3AF' : '#6B7280',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  mb: 2
-                }}
-              >
-                Добавить участников
-              </Typography>
-              <TextField
-                fullWidth
-                placeholder="Поиск пользователей..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                sx={{ 
-                  mb: 2,
-                  '& .MuiOutlinedInput-root': {
-                    backgroundColor: isDarkMode ? '#374151' : '#F3F4F6',
-                    '& fieldset': {
-                      borderColor: isDarkMode ? '#4B5563' : '#D1D5DB',
-                    },
-                    '&:hover fieldset': {
-                      borderColor: isDarkMode ? '#6B7280' : '#9CA3AF',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: isDarkMode ? '#3B82F6' : '#2563EB',
-                    },
+                  flex: 1,
+                  '& .MuiAutocomplete-popupIndicator': {
+                    color: isDarkMode ? '#9CA3AF' : '#6B7280',
                   },
-                  '& .MuiInputBase-input': {
+                  '& .MuiAutocomplete-clearIndicator': {
+                    color: isDarkMode ? '#9CA3AF' : '#6B7280',
+                  },
+                  '& .MuiAutocomplete-option': {
+                    backgroundColor: isDarkMode ? '#1F2937' : '#FFFFFF',
                     color: isDarkMode ? '#F9FAFB' : '#111827',
+                    '&:hover': {
+                      backgroundColor: isDarkMode ? '#374151' : '#F3F4F6',
+                    },
                   },
                 }}
               />
-
-              {availableUsers.length > 0 ? (
-                <List>
-                  {availableUsers.map((user) => (
-                    <ListItem key={user.id}>
-                      <Checkbox
-                        checked={selectedUsers.includes(user.id)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedUsers([...selectedUsers, user.id]);
-                          } else {
-                            setSelectedUsers(selectedUsers.filter(id => id !== user.id));
-                          }
-                        }}
-                        sx={{
-                          color: isDarkMode ? '#9CA3AF' : '#6B7280',
-                          '&.Mui-checked': {
-                            color: '#3B82F6',
-                          },
-                        }}
-                      />
-                      <ListItemAvatar>
-                        {user.avatarUrl ? (
-                          <Box sx={{
-                            width: 40,
-                            height: 40,
-                            position: 'relative',
-                            borderRadius: '50%',
-                            overflow: 'hidden'
-                          }}>
-                            <Image
-                              src={`${API_URL}${user.avatarUrl}`}
-                              alt={`${user.firstName} ${user.lastName}`}
-                              fill
-                              style={{
-                                objectFit: 'cover',
-                              }}
-                              unoptimized
-                            />
-                          </Box>
-                        ) : (
-                          <Avatar
-                            sx={{
-                              width: 40,
-                              height: 40,
-                              bgcolor: isDarkMode ? '#3B82F6' : '#2563EB',
-                            }}
-                          >
-                            {user.firstName?.[0]}{user.lastName?.[0]}
-                          </Avatar>
-                        )}
-                      </ListItemAvatar>
-                      <ListItemText 
-                        primary={`${user.firstName} ${user.lastName}`}
-                        sx={{
-                          '& .MuiListItemText-primary': {
-                            color: isDarkMode ? '#F9FAFB' : '#1F2937',
-                          }
-                        }}
-                      />
-                    </ListItem>
-                  ))}
-                </List>
-              ) : searchQuery.trim() ? (
-                <Typography sx={{ color: isDarkMode ? '#9CA3AF' : '#6B7280', textAlign: 'center', mt: 2 }}>
-                  Пользователи не найдены
-                </Typography>
-              ) : null}
+              <ActionButton
+                variant="contained"
+                onClick={handleAddUser}
+                disabled={!tempSelectedUser}
+                sx={{
+                  backgroundColor: '#3B82F6',
+                  color: '#FFFFFF',
+                  '&:hover': {
+                    backgroundColor: '#2563EB',
+                  }
+                }}
+              >
+                Добавить
+              </ActionButton>
             </Box>
           </DialogContent>
-          <DialogActions>
-            <Button 
+          <DialogActions 
+            sx={{ 
+              padding: '16px 24px',
+              borderTop: `1px solid ${isDarkMode ? '#374151' : '#E5E7EB'}`
+            }}
+          >
+            <ActionButton 
               onClick={() => {
                 setIsParticipantsDialogOpen(false);
                 setSelectedUsers([]);
                 setAvailableUsers([]);
               }}
-              sx={{ color: isDarkMode ? '#9CA3AF' : '#6B7280' }}
-            >
-              Отмена
-            </Button>
-            <Button 
-              onClick={handleUpdateParticipants}
-              variant="contained"
-              disabled={selectedUsers.length === 0}
-              sx={{
-                backgroundColor: '#3B82F6',
+              sx={{ 
+                color: isDarkMode ? '#9CA3AF' : '#6B7280',
                 '&:hover': {
-                  backgroundColor: '#2563EB',
-                },
+                  backgroundColor: isDarkMode ? '#374151' : '#F3F4F6',
+                }
               }}
             >
-              Добавить
-            </Button>
+              Закрыть
+            </ActionButton>
           </DialogActions>
         </Dialog>
 

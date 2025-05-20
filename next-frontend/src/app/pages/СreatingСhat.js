@@ -36,25 +36,89 @@ const Header = styled(Box)({
   alignItems: 'center',
   justifyContent: 'flex-start',
   width: '780px',
-  padding: '16px 0',  
+  padding: '24px 0',
+  marginBottom: '16px',
 });
 
 const PageContent = styled(Paper)({
-  width: '780px',       
+  width: '780px',
   minHeight: '500px',
-  padding: '24px',
-  borderRadius: '12px',
-  boxShadow: '0px 4px 16px rgba(0, 0, 0, 0.05)',
+  padding: '32px',
+  borderRadius: '16px',
+  boxShadow: '0px 8px 24px rgba(0, 0, 0, 0.08)',
   display: 'flex',
   flexDirection: 'column',
+  gap: '32px',
+  transition: 'all 0.3s ease',
+  '&:hover': {
+    boxShadow: '0px 12px 32px rgba(0, 0, 0, 0.12)',
+  }
 });
 
 const InputContainer = styled(Box)({
   display: 'flex',
   flexDirection: 'column',
-  gap: '16px',
-  marginBottom: '24px',
+  gap: '24px',
 });
+
+const StyledSelect = styled(Select)(({ theme }) => ({
+  backgroundColor: theme.palette.mode === 'dark' ? '#1F2937' : '#FFFFFF',
+  color: theme.palette.mode === 'dark' ? '#F9FAFB' : '#111827',
+  borderRadius: '12px',
+  '& .MuiOutlinedInput-notchedOutline': {
+    borderColor: theme.palette.mode === 'dark' ? '#374151' : '#E5E7EB',
+    transition: 'border-color 0.2s ease',
+  },
+  '&:hover .MuiOutlinedInput-notchedOutline': {
+    borderColor: theme.palette.mode === 'dark' ? '#4B5563' : '#D1D5DB',
+  },
+  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+    borderColor: '#3B82F6',
+    borderWidth: '2px',
+  }
+}));
+
+const StyledTextField = styled(TextField)(({ theme }) => ({
+  '& .MuiOutlinedInput-root': {
+    color: theme.palette.mode === 'dark' ? '#F9FAFB' : '#111827',
+    borderRadius: '12px',
+    backgroundColor: theme.palette.mode === 'dark' ? '#1F2937' : '#FFFFFF',
+    transition: 'all 0.2s ease',
+    '& fieldset': {
+      borderColor: theme.palette.mode === 'dark' ? '#374151' : '#E5E7EB',
+    },
+    '&:hover fieldset': {
+      borderColor: theme.palette.mode === 'dark' ? '#4B5563' : '#D1D5DB',
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: '#3B82F6',
+      borderWidth: '2px',
+    }
+  }
+}));
+
+const StyledButton = styled(Button)(({ theme }) => ({
+  borderRadius: '12px',
+  padding: '12px 24px',
+  textTransform: 'none',
+  fontWeight: 600,
+  transition: 'all 0.2s ease',
+  '&:hover': {
+    transform: 'translateY(-1px)',
+  }
+}));
+
+const ParticipantItem = styled(ListItem)(({ theme }) => ({
+  backgroundColor: theme.palette.mode === 'dark' ? '#1F2937' : '#F3F4F6',
+  borderRadius: '12px',
+  padding: '12px 16px',
+  marginBottom: '8px',
+  transition: 'all 0.2s ease',
+  '&:hover': {
+    backgroundColor: theme.palette.mode === 'dark' ? '#374151' : '#E5E7EB',
+    transform: 'translateX(4px)',
+  }
+}));
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
@@ -299,7 +363,7 @@ const СreatingСhat = () => {
           position: 'relative', 
           backgroundColor: 'transparent',
           minHeight: '100vh',
-          padding: '24px',
+          padding: '32px',
           zIndex: 1,
         }}
       >
@@ -308,15 +372,20 @@ const СreatingСhat = () => {
             onClick={handleGoBack}
             sx={{ 
               color: isDarkMode ? '#E5E7EB' : '#111827',
-              marginRight: '16px'
+              marginRight: '16px',
+              transition: 'transform 0.2s ease',
+              '&:hover': {
+                transform: 'translateX(-4px)',
+              }
             }}
           >
             <ArrowBack />
           </IconButton>
           <Typography 
-            variant="h6" 
+            variant="h5" 
             sx={{ 
               color: isDarkMode ? '#E5E7EB' : '#111827',
+              fontWeight: 600,
               flexGrow: 1
             }}
           >
@@ -331,7 +400,11 @@ const СreatingСhat = () => {
                   height: 40,
                   bgcolor: isDarkMode ? '#374151' : '#E5E7EB',
                   color: isDarkMode ? '#E5E7EB' : '#111827',
-                  fontSize: '1rem'
+                  fontSize: '1rem',
+                  transition: 'transform 0.2s ease',
+                  '&:hover': {
+                    transform: 'scale(1.1)',
+                  }
                 }}
               >
                 {!userData?.avatarUrl && userData ? `${userData.firstName?.[0]}${userData.lastName?.[0]}` : ''}
@@ -344,61 +417,39 @@ const СreatingСhat = () => {
           sx={{
             backgroundColor: isDarkMode ? '#111827' : '#ffffff',
             border: isDarkMode ? '1px solid #374151' : 'none',
-            gap: '24px'
           }}
         >
           <InputContainer>
-            <Typography variant="h6" sx={{ color: isDarkMode ? '#F9FAFB' : '#111827' }}>
+            <Typography variant="h6" sx={{ color: isDarkMode ? '#F9FAFB' : '#111827', fontWeight: 600 }}>
               Основные
             </Typography>
-            <Box display="flex" gap="16px">
+            <Box display="flex" gap="24px">
               <Box flex={1}>
-                <Typography variant="body2" sx={{ color: isDarkMode ? '#9CA3AF' : '#6B7280' }}>
+                <Typography variant="body2" sx={{ color: isDarkMode ? '#9CA3AF' : '#6B7280', mb: 1 }}>
                   Тип чата
                 </Typography>
-                <Select 
+                <StyledSelect 
                   fullWidth 
                   variant="outlined" 
                   value={chatType}
                   onChange={handleChatTypeChange}
                   displayEmpty
-                  sx={{
-                    backgroundColor: isDarkMode ? '#1F2937' : '#FFFFFF',
-                    color: isDarkMode ? '#F9FAFB' : '#111827',
-                    '& .MuiOutlinedInput-notchedOutline': {
-                      borderColor: isDarkMode ? '#374151' : '#E5E7EB',
-                    },
-                    '&:hover .MuiOutlinedInput-notchedOutline': {
-                      borderColor: isDarkMode ? '#4B5563' : '#D1D5DB',
-                    },
-                  }}
                 >
                   <MenuItem value="Групповой">Групповой</MenuItem>
                   <MenuItem value="Личный">Личный</MenuItem>
-                </Select>
+                </StyledSelect>
               </Box>
               {chatType !== 'Личный' && (
                 <Box flex={1}>
-                  <Typography variant="body2" sx={{ color: isDarkMode ? '#9CA3AF' : '#6B7280' }}>
+                  <Typography variant="body2" sx={{ color: isDarkMode ? '#9CA3AF' : '#6B7280', mb: 1 }}>
                     Название
                   </Typography>
-                  <TextField 
+                  <StyledTextField 
                     fullWidth 
                     variant="outlined" 
                     value={chatName}
                     onChange={(e) => setChatName(e.target.value)}
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        color: isDarkMode ? '#F9FAFB' : '#111827',
-                        '& fieldset': {
-                          borderColor: isDarkMode ? '#374151' : '#E5E7EB',
-                        },
-                        '&:hover fieldset': {
-                          borderColor: isDarkMode ? '#4B5563' : '#D1D5DB',
-                        },
-                      },
-                      backgroundColor: isDarkMode ? '#1F2937' : '#FFFFFF',
-                    }}
+                    placeholder="Введите название чата"
                   />
                 </Box>
               )}
@@ -406,12 +457,12 @@ const СreatingСhat = () => {
           </InputContainer>
 
           <InputContainer>
-            <Typography variant="h6" sx={{ color: isDarkMode ? '#F9FAFB' : '#111827' }}>
+            <Typography variant="h6" sx={{ color: isDarkMode ? '#F9FAFB' : '#111827', fontWeight: 600 }}>
               Участники чата
             </Typography>
-            <Box display="flex" gap="16px">
+            <Box display="flex" gap="24px">
               <Box flex={1}>
-                <Typography variant="body2" sx={{ color: isDarkMode ? '#9CA3AF' : '#6B7280' }}>
+                <Typography variant="body2" sx={{ color: isDarkMode ? '#9CA3AF' : '#6B7280', mb: 1 }}>
                   {chatType === 'Личный' ? 'Выберите собеседника' : 'Добавить участника'}
                 </Typography>
                 <Autocomplete
@@ -425,22 +476,10 @@ const СreatingСhat = () => {
                   noOptionsText={error || "Пользователи не найдены"}
                   disabled={chatType === 'Личный' && selectedUsers.length > 0}
                   renderInput={(params) => (
-                    <TextField
+                    <StyledTextField
                       {...params}
                       variant="outlined"
                       placeholder={chatType === 'Личный' && selectedUsers.length > 0 ? 'Можно выбрать только одного собеседника' : ''}
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          color: isDarkMode ? '#F9FAFB' : '#111827',
-                          '& fieldset': {
-                            borderColor: isDarkMode ? '#374151' : '#E5E7EB',
-                          },
-                          '&:hover fieldset': {
-                            borderColor: isDarkMode ? '#4B5563' : '#D1D5DB',
-                          },
-                        },
-                        backgroundColor: isDarkMode ? '#1F2937' : '#FFFFFF',
-                      }}
                       InputProps={{
                         ...params.InputProps,
                         endAdornment: (
@@ -452,65 +491,26 @@ const СreatingСhat = () => {
                       }}
                     />
                   )}
-                  renderOption={(props, option) => {
-                    const { key, ...otherProps } = props;
-                    return (
-                      <li key={key} {...otherProps}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Avatar
-                            src={option.avatarUrl ? `${API_URL}${option.avatarUrl}` : undefined}
-                            sx={{
-                              width: 32,
-                              height: 32,
-                              bgcolor: isDarkMode ? '#374151' : '#E5E7EB',
-                              color: isDarkMode ? '#E5E7EB' : '#111827',
-                              fontSize: '0.875rem'
-                            }}
-                          >
-                            {!option.avatarUrl ? `${option.firstName?.[0]}${option.lastName?.[0]}` : ''}
-                          </Avatar>
-                          <Box>
-                            <Typography sx={{ color: isDarkMode ? '#F9FAFB' : '#111827' }}>
-                              {option.firstName} {option.lastName}
-                            </Typography>
-                            <Typography variant="body2" sx={{ color: isDarkMode ? '#9CA3AF' : '#6B7280' }}>
-                              {option.username}
-                            </Typography>
-                          </Box>
-                        </Box>
-                      </li>
-                    );
-                  }}
                 />
               </Box>
               {chatType !== 'Личный' && (
                 <Box flex={1}>
-                  <Typography variant="body2" sx={{ color: isDarkMode ? '#9CA3AF' : '#6B7280' }}>
+                  <Typography variant="body2" sx={{ color: isDarkMode ? '#9CA3AF' : '#6B7280', mb: 1 }}>
                     Роль
                   </Typography>
-                  <Select 
+                  <StyledSelect 
                     fullWidth 
                     variant="outlined" 
                     value={tempSelectedRole}
                     onChange={(e) => setTempSelectedRole(e.target.value)}
                     displayEmpty
-                    sx={{
-                      backgroundColor: isDarkMode ? '#1F2937' : '#FFFFFF',
-                      color: isDarkMode ? '#F9FAFB' : '#111827',
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: isDarkMode ? '#374151' : '#E5E7EB',
-                      },
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: isDarkMode ? '#4B5563' : '#D1D5DB',
-                      },
-                    }}
                   >
                     <MenuItem value="Администратор">Администратор</MenuItem>
                     <MenuItem value="Пользователь">Пользователь</MenuItem>
-                  </Select>
+                  </StyledSelect>
                 </Box>
               )}
-              <Button
+              <StyledButton
                 variant="contained"
                 startIcon={<PersonAddIcon />}
                 onClick={handleAddUser}
@@ -525,32 +525,33 @@ const СreatingСhat = () => {
                 }}
               >
                 Добавить
-              </Button>
+              </StyledButton>
             </Box>
 
             <List sx={{ mt: 2, flex: 1, overflow: 'auto' }}>
               {selectedUsers.map((user) => (
-                <ListItem
-                  key={user.id}
-                  sx={{
-                    backgroundColor: isDarkMode ? '#1F2937' : '#F3F4F6',
-                    borderRadius: '8px',
-                    mb: 1
-                  }}
-                >
+                <ParticipantItem key={user.id}>
                   <ListItemAvatar>
                     <Avatar
                       src={user.avatarUrl ? `${API_URL}${user.avatarUrl}` : undefined}
                       sx={{
                         bgcolor: isDarkMode ? '#374151' : '#E5E7EB',
                         color: isDarkMode ? '#E5E7EB' : '#111827',
+                        transition: 'transform 0.2s ease',
+                        '&:hover': {
+                          transform: 'scale(1.1)',
+                        }
                       }}
                     >
                       {!user.avatarUrl ? `${user.firstName?.[0]}${user.lastName?.[0]}` : ''}
                     </Avatar>
                   </ListItemAvatar>
                   <ListItemText
-                    primary={`${user.firstName} ${user.lastName}`}
+                    primary={
+                      <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
+                        {`${user.firstName} ${user.lastName}`}
+                      </Typography>
+                    }
                     secondary={
                       <Box 
                         component="span"
@@ -570,10 +571,11 @@ const СreatingСhat = () => {
                               alignItems: 'center',
                               backgroundColor: user.role === 'Администратор' ? '#3B82F6' : '#9CA3AF',
                               color: '#FFFFFF',
-                              padding: '0 8px',
-                              borderRadius: '16px',
+                              padding: '0 12px',
+                              borderRadius: '8px',
                               fontSize: '0.75rem',
-                              height: '20px'
+                              height: '24px',
+                              fontWeight: 500
                             }}
                           >
                             {user.role}
@@ -586,18 +588,25 @@ const СreatingСhat = () => {
                     <IconButton
                       edge="end"
                       onClick={() => handleRemoveUser(user.id)}
-                      sx={{ color: isDarkMode ? '#E5E7EB' : '#111827' }}
+                      sx={{ 
+                        color: isDarkMode ? '#E5E7EB' : '#111827',
+                        transition: 'all 0.2s ease',
+                        '&:hover': {
+                          color: '#EF4444',
+                          transform: 'scale(1.1)',
+                        }
+                      }}
                     >
                       <DeleteIcon />
                     </IconButton>
                   </ListItemSecondaryAction>
-                </ListItem>
+                </ParticipantItem>
               ))}
             </List>
           </InputContainer>
 
           <Box sx={{ mt: 'auto' }}>
-            <Button 
+            <StyledButton 
               variant="contained" 
               color="primary"
               onClick={handleCreateChat}
@@ -612,7 +621,7 @@ const СreatingСhat = () => {
               }}
             >
               {loading ? <CircularProgress size={24} color="inherit" /> : 'Создать чат'}
-            </Button>
+            </StyledButton>
           </Box>
         </PageContent>
       </Container> 
@@ -623,7 +632,14 @@ const СreatingСhat = () => {
         onClose={handleCloseSnackbar}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity}>
+        <Alert 
+          onClose={handleCloseSnackbar} 
+          severity={snackbar.severity}
+          sx={{
+            borderRadius: '12px',
+            boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)',
+          }}
+        >
           {snackbar.message}
         </Alert>
       </Snackbar>
