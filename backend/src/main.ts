@@ -15,12 +15,6 @@ async function bootstrap() {
   
     app.useGlobalPipes(new ValidationPipe({ transform: true }));
     app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
-    app.enableCors({
-        origin: '*',
-        methods: '*',
-        allowedHeaders: '*',
-        credentials: false
-    });
   
     // Serve static files
     app.useStaticAssets(join(__dirname, '..', 'uploads'), {
