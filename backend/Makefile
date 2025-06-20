@@ -6,7 +6,10 @@ export $(shell sed 's/=.*//' .env)
 
 DUMP_FILE = dump/dump.sql
 
-.PHONY: apply-dump create-dump check-env
+.PHONY: apply-dump create-dump check-env init create-db drop-db reset-db
+
+init: create-db apply-dump
+	@echo "Database initialized with dump!"
 
 apply-dump: check-env
 	@echo "Applying database dump..."
@@ -36,19 +39,23 @@ check-env:
 		exit 1; \
 	fi
 
-# Дополнительные полезные команды
 create-db: check-env
+	@echo "Creating database $(POSTGRES_DB)..."
 	@PGPASSWORD=$(POSTGRES_PASSWORD) psql \
 		-U $(POSTGRES_USER) \
 		-h $(POSTGRES_HOST) \
 		-p $(POSTGRES_PORT) \
 		-c "CREATE DATABASE $(POSTGRES_DB);"
+	@echo "Database created!"
 
 drop-db: check-env
+	@echo "Dropping database $(POSTGRES_DB)..."
 	@PGPASSWORD=$(POSTGRES_PASSWORD) psql \
 		-U $(POSTGRES_USER) \
 		-h $(POSTGRES_HOST) \
 		-p $(POSTGRES_PORT) \
 		-c "DROP DATABASE IF EXISTS $(POSTGRES_DB);"
+	@echo "Database dropped!"
 
-reset-db: drop-db create-db apply-dump
+reset-db: drop-db init
+	@echo "Database has been reset!"
